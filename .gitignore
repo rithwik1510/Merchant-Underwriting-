@@ -1,0 +1,42 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Databases / local state
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Frontend build artifacts
+frontend/grabon-underwriting/.next/
+frontend/grabon-underwriting/node_modules/
+frontend/grabon-underwriting/tsconfig.tsbuildinfo
+
+# Nested repo metadata from create-next-app bootstrap
+frontend/grabon-underwriting/.git/
+frontend/grabon-underwriting/.git-backup/
+
+# Tooling / local agent state
+.claude/
+
+# Internal planning / assessment artifacts
+AGENTS.md
+plan.md
+GrabOn-VibeCoder-Project-Briefs*.pdf
