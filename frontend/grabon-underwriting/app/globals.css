@@ -1,0 +1,266 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 100% 99%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 96%;
+    --secondary-foreground: 222 34% 24%;
+    --muted: 214 28% 95%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 100% 97%;
+    --accent-foreground: 221 83% 53%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 93%;
+    --ring: 221 83% 53%;
+    --radius: 0.875rem;
+
+    --go-950: 8 18 38;
+    --go-900: 15 30 60;
+    --go-800: 23 53 106;
+    --go-700: 29 78 216;
+    --go-600: 37 99 235;
+    --go-500: 59 130 246;
+    --go-400: 96 165 250;
+    --go-300: 147 197 253;
+    --go-200: 219 234 254;
+    --go-100: 239 246 255;
+    --go-50: 248 251 255;
+
+    --ink-900: 15 23 42;
+    --ink-800: 23 32 51;
+    --ink-700: 51 65 85;
+    --ink-600: 71 85 105;
+    --ink-500: 100 116 139;
+    --ink-400: 148 163 184;
+    --ink-300: 203 213 225;
+    --ink-200: 226 232 240;
+    --ink-100: 238 242 247;
+    --ink-50: 248 250 252;
+
+    --risk-950: 76 5 25;
+    --risk-900: 136 19 55;
+    --risk-800: 159 18 57;
+    --risk-700: 190 18 60;
+    --risk-600: 220 38 38;
+    --risk-500: 239 68 68;
+    --risk-400: 248 113 113;
+    --risk-300: 252 165 165;
+    --risk-200: 254 202 202;
+    --risk-100: 254 226 226;
+    --risk-50: 255 241 242;
+
+    --success-600: 5 150 105;
+    --success-500: 16 185 129;
+    --success-100: 209 250 229;
+    --success-50: 236 253 245;
+
+    --surface-base: 246 249 254;
+    --surface-muted: 238 244 255;
+    --surface-card: 255 255 255;
+    --surface-deep: 234 241 251;
+    --surface-100: 238 242 247;
+    --surface-50: 248 250 252;
+  }
+
+  .dark {
+    --background: 220 43% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 39% 11%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 39% 11%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 214 95% 67%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 218 30% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 220 28% 16%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 217 45% 16%;
+    --accent-foreground: 214 95% 75%;
+    --destructive: 0 74% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 219 28% 24%;
+    --input: 219 28% 24%;
+    --ring: 214 95% 67%;
+
+    --go-950: 236 246 255;
+    --go-900: 221 239 255;
+    --go-800: 191 219 254;
+    --go-700: 147 197 253;
+    --go-600: 96 165 250;
+    --go-500: 59 130 246;
+    --go-400: 37 99 235;
+    --go-300: 29 78 216;
+    --go-200: 30 58 138;
+    --go-100: 30 41 76;
+    --go-50: 15 23 42;
+
+    --ink-900: 241 245 249;
+    --ink-800: 226 232 240;
+    --ink-700: 203 213 225;
+    --ink-600: 148 163 184;
+    --ink-500: 129 140 158;
+    --ink-400: 100 116 139;
+    --ink-300: 71 85 105;
+    --ink-200: 51 65 85;
+    --ink-100: 30 41 59;
+    --ink-50: 15 23 42;
+
+    --risk-950: 255 228 230;
+    --risk-900: 254 205 211;
+    --risk-800: 253 164 175;
+    --risk-700: 251 113 133;
+    --risk-600: 244 63 94;
+    --risk-500: 225 29 72;
+    --risk-400: 190 24 93;
+    --risk-300: 159 18 57;
+    --risk-200: 136 19 55;
+    --risk-100: 94 14 40;
+    --risk-50: 76 5 25;
+
+    --success-600: 110 231 183;
+    --success-500: 52 211 153;
+    --success-100: 6 78 59;
+    --success-50: 4 47 46;
+
+    --surface-base: 7 12 24;
+    --surface-muted: 15 23 42;
+    --surface-card: 11 18 32;
+    --surface-deep: 22 34 57;
+    --surface-100: 20 30 50;
+    --surface-50: 26 39 64;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-base text-ink-900 font-sans antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 12% -8%, rgba(37, 99, 235, 0.1), transparent 35%),
+      radial-gradient(circle at 88% 8%, rgba(244, 63, 94, 0.08), transparent 28%);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--surface-50));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--ink-300));
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--ink-400));
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .panel-card {
+    @apply rounded-3xl border border-ink-100 bg-surface-card shadow-card;
+  }
+
+  .panel-card-muted {
+    @apply rounded-3xl border border-ink-100 bg-surface-muted shadow-card;
+  }
+
+  .panel-section {
+    @apply rounded-3xl border border-ink-100 bg-surface-card shadow-card;
+  }
+
+  .hero-surface {
+    @apply rounded-3xl border border-ink-200 bg-surface-50 shadow-soft;
+    border-left: 3px solid theme(colors.go.500);
+  }
+
+  .nav-surface {
+    @apply bg-surface-card border-r border-ink-100;
+  }
+
+  .tab-chip {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200;
+  }
+
+  .metric-card {
+    @apply rounded-2xl border border-ink-100 bg-surface-card px-4 py-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-go-600 px-5 py-2.5
+           text-sm font-semibold text-white shadow-sm transition-all duration-150
+           hover:bg-go-700 hover:shadow-md active:translate-y-px;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-surface-card px-4 py-2 text-sm font-medium text-ink-700 transition-all duration-150;
+  }
+
+  .btn-outline:hover {
+    @apply border-go-300 bg-go-50 text-go-700;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  }
+
+  .status-pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide;
+  }
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .ring-blue-soft {
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2), 0 10px 25px rgba(37, 99, 235, 0.08);
+  }
+
+  .ring-risk-soft {
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.18), 0 10px 25px rgba(220, 38, 38, 0.10);
+  }
+
+  .dark .bg-white {
+    background-color: rgb(var(--surface-card)) !important;
+  }
+}
