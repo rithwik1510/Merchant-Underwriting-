@@ -181,6 +181,25 @@ class LLMProbeResponse(BaseModel):
     error_detail: str | None = None
 
 
+class LLMSettingsResponse(BaseModel):
+    provider: str
+    lmstudio_base_url: str
+    lmstudio_model: str
+    claude_model: str
+    claude_base_url: str
+    claude_api_key_configured: bool
+    claude_api_key_masked: str | None = None
+
+
+class LLMSettingsUpdateRequest(BaseModel):
+    provider: str
+    lmstudio_base_url: str | None = None
+    lmstudio_model: str | None = None
+    claude_model: str | None = None
+    claude_base_url: str | None = None
+    claude_api_key: str | None = None
+
+
 class WhatsAppDraftRequest(BaseModel):
     message_type: str = "combined_offer"
 

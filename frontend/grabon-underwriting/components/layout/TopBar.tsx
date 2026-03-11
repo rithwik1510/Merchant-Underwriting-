@@ -96,6 +96,8 @@ function generateCrumbs(pathname: string): Crumb[] {
       if (parts[2] === "accept") crumbs.push({ label: "Offer Acceptance" });
       if (parts[2] === "mandate") crumbs.push({ label: "Mandate Flow" });
     }
+  } else if (parts[0] === "settings") {
+    crumbs.push({ label: "Settings" });
   }
   return crumbs;
 }

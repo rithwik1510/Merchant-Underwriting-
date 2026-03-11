@@ -9,11 +9,13 @@ import {
   ChevronRight,
   Activity,
   ShieldCheck,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
   { label: "Merchant Console", href: "/", icon: LayoutGrid, exact: true },
   { label: "Run Ledger", href: "/runs", icon: ListOrdered, exact: false },
+  { label: "Settings", href: "/settings", icon: Settings, exact: true },
 ];
 
 export function Sidebar() {

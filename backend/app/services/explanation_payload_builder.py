@@ -27,6 +27,10 @@ def build_explanation_payload(run: UnderwritingRun) -> dict:
 
     cited_metrics = _build_cited_metrics(run, category_refund_rate, category_return_rate, avg_refund_rate_3m)
     numeric_tokens = _collect_numeric_tokens(run)
+    for metric in cited_metrics:
+        numeric_tokens.update(_extract_numeric_tokens(metric.get("value")))
+        numeric_tokens.update(_extract_numeric_tokens(metric.get("benchmark_value")))
+        numeric_tokens.update(_extract_numeric_tokens(metric.get("comparison_text")))
     return {
         "merchant_name": run.merchant.merchant_name,
         "category": run.merchant.category,
@@ -69,11 +73,37 @@ def build_explanation_payload(run: UnderwritingRun) -> dict:
 
 
 def build_whatsapp_payload(run: UnderwritingRun, message_type: str) -> dict:
+    category_refund_rate = None
+    if run.feature_snapshot.refund_delta_vs_category is not None:
+        category_refund_rate = Decimal(run.merchant.return_and_refund_rate) - Decimal(run.feature_snapshot.refund_delta_vs_category)
+
+    category_return_rate = None
+    if run.feature_snapshot.return_rate_delta_vs_category is not None:
+        category_return_rate = Decimal(run.merchant.customer_return_rate) - Decimal(run.feature_snapshot.return_rate_delta_vs_category)
+
     payload = {
         "merchant_name": run.merchant.merchant_name,
         "decision": run.decision.value,
+        "risk_tier": run.risk_tier.value,
+        "category": run.merchant.category,
         "message_type": message_type,
         "mode": "whatsapp_summary",
+        "gmv_growth_12m_pct": f"{_fmt(run.feature_snapshot.gmv_growth_12m_pct)}%" if run.feature_snapshot.gmv_growth_12m_pct is not None else None,
+        "customer_return_rate": f"{_fmt(run.merchant.customer_return_rate)}%",
+        "category_customer_return_rate": f"{_fmt(category_return_rate)}%" if category_return_rate is not None else None,
+        "customer_return_comparison_text": _benchmark_comparison_text(
+            Decimal(run.merchant.customer_return_rate),
+            category_return_rate,
+            positive_when="higher",
+        ),
+        "refund_rate": f"{_fmt(run.merchant.return_and_refund_rate)}%",
+        "category_refund_rate": f"{_fmt(category_refund_rate)}%" if category_refund_rate is not None else None,
+        "refund_comparison_text": _benchmark_comparison_text(
+            Decimal(run.merchant.return_and_refund_rate),
+            category_refund_rate,
+            positive_when="lower",
+        ),
+        "avg_monthly_gmv_3m": _money_short(run.feature_snapshot.avg_monthly_gmv_3m),
     }
     if message_type == "credit_offer":
         payload.update(
@@ -81,6 +111,7 @@ def build_whatsapp_payload(run: UnderwritingRun, message_type: str) -> dict:
                 "product_name": "GrabCredit",
                 "credit_limit": _money_short(run.credit_offer.final_limit),
                 "interest_range": _percent_range_text(run.credit_offer.interest_rate_min, run.credit_offer.interest_rate_max),
+                "tenure_options_text": _tenure_text(run.credit_offer.tenure_options_json),
             }
         )
     elif message_type == "insurance_offer":
@@ -98,6 +129,7 @@ def build_whatsapp_payload(run: UnderwritingRun, message_type: str) -> dict:
                 "product_name": "GrabCredit and GrabInsurance",
                 "credit_limit": _money_short(run.credit_offer.final_limit),
                 "interest_range": _percent_range_text(run.credit_offer.interest_rate_min, run.credit_offer.interest_rate_max),
+                "tenure_options_text": _tenure_text(run.credit_offer.tenure_options_json),
                 "coverage_amount": _money_short(run.insurance_offer.coverage_amount),
                 "premium_amount": _money_short(run.insurance_offer.premium_amount),
                 "policy_type": run.insurance_offer.policy_type,
@@ -130,6 +162,7 @@ def _collect_numeric_tokens(run: UnderwritingRun, message_type: str | None = Non
         _fmt(run.feature_snapshot.gmv_volatility_cv),
         _fmt(run.feature_snapshot.refund_delta_vs_category),
         _fmt(run.feature_snapshot.return_rate_delta_vs_category),
+        _money_numeric_token(run.feature_snapshot.avg_monthly_gmv_3m),
     }
     credit_values = {
         _fmt(run.credit_offer.final_limit),
@@ -158,12 +191,19 @@ def _collect_numeric_tokens(run: UnderwritingRun, message_type: str | None = Non
     else:
         values.update(credit_values)
         values.update(insurance_values)
-    return {value for value in values if value}
+    expanded_values: set[str] = set()
+    for value in values:
+        if not value:
+            continue
+        expanded_values.update(_numeric_variants(value))
+    return expanded_values
 
 
 def _fmt(value) -> str | None:
     if value is None:
         return None
+    if isinstance(value, Decimal):
+        value = value.quantize(Decimal("0.0001"))
     return format(value, "f").rstrip("0").rstrip(".")
 
 
@@ -210,6 +250,42 @@ def _trim_float(value: float) -> str:
     return text.rstrip("0").rstrip(".")
 
 
+def _tenure_text(options: list[int] | None) -> str | None:
+    if not options:
+        return None
+    return ", ".join(f"{int(option)} months" for option in options)
+
+
+def _numeric_variants(value: str) -> set[str]:
+    variants = {value}
+    try:
+        decimal_value = Decimal(value)
+    except Exception:
+        return variants
+
+    for precision in ("0.1", "0.01", "0.0001"):
+        rounded = decimal_value.quantize(Decimal(precision))
+        variants.add(format(rounded, "f").rstrip("0").rstrip("."))
+    return {variant for variant in variants if variant}
+
+
+def _extract_numeric_tokens(value: str | None) -> set[str]:
+    if not value:
+        return set()
+    tokens = set()
+    current = ""
+    for char in value:
+        if char.isdigit() or char == ".":
+            current += char
+            continue
+        if current:
+            tokens.update(_numeric_variants(current))
+            current = ""
+    if current:
+        tokens.update(_numeric_variants(current))
+    return tokens
+
+
 def _build_offer_summary(run: UnderwritingRun) -> str:
     tier_text = run.risk_tier.value.replace("_", " ").title()
     if run.decision.value == "approved":
@@ -223,6 +299,32 @@ def _build_offer_summary(run: UnderwritingRun) -> str:
             f"and coverage up to {_money_short(run.insurance_offer.coverage_amount)}."
         )
     return f"Offer not approved because the merchant failed core underwriting checks at {tier_text}."
+
+
+def _benchmark_comparison_text(
+    merchant_value: Decimal | None,
+    benchmark_value: Decimal | None,
+    *,
+    positive_when: str,
+) -> str | None:
+    if merchant_value is None or benchmark_value is None:
+        return None
+
+    delta = merchant_value - benchmark_value
+    delta_abs = abs(delta)
+    if delta_abs == 0:
+        return f"in line with the category benchmark of {_fmt(benchmark_value)}%"
+
+    unit = "percentage point" if _fmt(delta_abs) == "1" else "percentage points"
+
+    if positive_when == "higher":
+        if delta > 0:
+            return f"{_fmt(delta_abs)} {unit} above the category benchmark of {_fmt(benchmark_value)}%"
+        return f"{_fmt(delta_abs)} {unit} below the category benchmark of {_fmt(benchmark_value)}%"
+
+    if delta < 0:
+        return f"{_fmt(delta_abs)} {unit} below the category benchmark of {_fmt(benchmark_value)}%"
+    return f"{_fmt(delta_abs)} {unit} above the category benchmark of {_fmt(benchmark_value)}%"
 
 
 def _build_cited_metrics(
@@ -245,7 +347,12 @@ def _build_cited_metrics(
             "label": "Customer return rate",
             "value": f"{_fmt(run.merchant.customer_return_rate)}%",
             "benchmark_value": f"{_fmt(category_return_rate)}%" if category_return_rate is not None else "",
-            "comparison_text": "repeat demand relative to category",
+            "comparison_text": _benchmark_comparison_text(
+                Decimal(run.merchant.customer_return_rate),
+                category_return_rate,
+                positive_when="higher",
+            )
+            or "repeat demand relative to category",
         }
     )
     refund_value = avg_refund_rate_3m if avg_refund_rate_3m is not None else Decimal(run.merchant.return_and_refund_rate)
@@ -254,7 +361,12 @@ def _build_cited_metrics(
             "label": "Refund / return rate",
             "value": f"{_fmt(refund_value)}%",
             "benchmark_value": f"{_fmt(category_refund_rate)}%" if category_refund_rate is not None else "",
-            "comparison_text": "merchant pressure versus category benchmark",
+            "comparison_text": _benchmark_comparison_text(
+                refund_value,
+                category_refund_rate,
+                positive_when="lower",
+            )
+            or "merchant pressure versus category benchmark",
         }
     )
     if run.feature_snapshot.avg_monthly_gmv_3m is not None:

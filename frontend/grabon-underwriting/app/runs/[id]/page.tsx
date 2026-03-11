@@ -76,98 +76,6 @@ export default async function RunDetailPage({ params }: Params) {
 
       <section className="space-y-3">
         <SectionLabel
-          icon={Sparkles}
-          title="Why this decision happened"
-          subtitle="Top signals only."
-          tone="risk"
-        />
-        <PanelCard className="p-4 md:p-5">
-          <div className="space-y-3">
-            {headlineReasons.map((reason, index) => (
-              <div key={reason.reason_code}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-ink-900">{reason.reason_label}</div>
-                    <p className="mt-1 text-sm text-ink-500">{reason.reason_detail}</p>
-                  </div>
-                  {reason.weight ? (
-                    <span className="status-pill shrink-0 border-ink-200 bg-surface-50 font-mono text-ink-500">
-                      {reason.weight} pts
-                    </span>
-                  ) : null}
-                </div>
-                {index < headlineReasons.length - 1 ? <div className="mt-3 border-b border-ink-100" /> : null}
-              </div>
-            ))}
-          </div>
-        </PanelCard>
-
-        <details className="group overflow-hidden rounded-[24px] border border-ink-100 bg-white shadow-card">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
-            <div>
-              <div className="text-sm font-semibold text-ink-900">See full decision breakdown</div>
-              <div className="mt-1 text-sm text-ink-500">
-                {totalReasons} score components, offer adjustments, and engineered merchant features.
-              </div>
-            </div>
-            <ChevronDown className="h-4 w-4 text-ink-400 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="space-y-4 border-t border-ink-100 px-5 py-5">
-            <div className="rounded-[24px] border border-ink-100 bg-surface-50 p-1">
-              <div className="rounded-[20px] bg-white p-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-400">
-                  Score breakdown
-                </div>
-                <div className="mt-3 space-y-3">
-                  {run.score_reasons.map((reason) => (
-                    <div key={reason.reason_code} className="rounded-2xl border border-ink-100 bg-surface-50 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-ink-900">{reason.reason_label}</div>
-                          <div className="mt-1 text-sm leading-6 text-ink-500">{reason.reason_detail}</div>
-                        </div>
-                        {reason.weight ? (
-                          <span className="status-pill border-ink-200 bg-white font-mono text-ink-500">
-                            {reason.weight} pts
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-2">
-              <PanelCard className="p-4">
-                <div className="mb-3 text-sm font-semibold text-ink-900">Offer adjustments</div>
-                <div className="space-y-3">
-                  {run.offer_adjustments.length ? (
-                    run.offer_adjustments.map((reason) => (
-                      <div key={reason.reason_code} className="rounded-2xl border border-ink-100 bg-surface-50 p-4 text-sm text-ink-600">
-                        <div className="font-semibold text-ink-900">{reason.reason_label}</div>
-                        <div className="mt-1 leading-6">{reason.reason_detail}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-ink-100 bg-surface-50 p-4 text-sm text-ink-500">
-                      No additional offer adjustments were needed.
-                    </div>
-                  )}
-                </div>
-              </PanelCard>
-
-              <PanelCard className="p-4">
-                <div className="mb-3 text-sm font-semibold text-ink-900">Engineered feature set</div>
-                <FeatureGrid features={run.features} />
-              </PanelCard>
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <section className="space-y-3">
-        <SectionLabel
           icon={MessageSquareText}
           title="Communicate"
           subtitle="Summary, draft, send."
@@ -182,24 +90,100 @@ export default async function RunDetailPage({ params }: Params) {
       </section>
 
       <section className="space-y-3">
-        <details className="group overflow-hidden rounded-[24px] border border-ink-100 bg-white shadow-card">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl border border-go-200 bg-go-50">
-                <ShieldCheck className="h-4 w-4 text-go-700" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-ink-900">Offer summary</div>
-                <div className="mt-1 text-sm text-ink-500">Open only when needed.</div>
-              </div>
+        <SectionLabel
+          icon={Sparkles}
+          title="Decision"
+          subtitle="Top signals and full detail."
+          tone="risk"
+        />
+        <PanelCard className="p-4 md:p-5">
+          <div className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              {headlineReasons.map((reason) => (
+                <div
+                  key={reason.reason_code}
+                  className="rounded-2xl border border-ink-100 bg-surface-50 px-4 py-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 text-sm font-semibold text-ink-900">{reason.reason_label}</div>
+                    {reason.weight ? (
+                      <span className="status-pill shrink-0 border-ink-200 bg-white font-mono text-ink-500">
+                        {reason.weight} pts
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 truncate text-sm text-ink-500">{reason.reason_detail}</p>
+                </div>
+              ))}
             </div>
-            <ChevronDown className="h-4 w-4 text-ink-400 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="space-y-4 border-t border-ink-100 px-5 py-5">
-            <CreditOfferCard offer={run.credit_offer} />
-            <InsuranceOfferCard offer={run.insurance_offer} />
+
+            <details className="group overflow-hidden rounded-[22px] border border-ink-100 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-ink-900">Full detail</div>
+                  <div className="mt-1 text-sm text-ink-500">
+                    {totalReasons} reasons, offers, features.
+                  </div>
+                </div>
+                <ChevronDown className="h-4 w-4 text-ink-400 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="space-y-4 border-t border-ink-100 px-4 py-4">
+                <div className="space-y-2">
+                  {run.score_reasons.map((reason) => (
+                    <div key={reason.reason_code} className="rounded-2xl border border-ink-100 bg-surface-50 px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-ink-900">{reason.reason_label}</div>
+                          <div className="mt-1 text-sm text-ink-500">{reason.reason_detail}</div>
+                        </div>
+                        {reason.weight ? (
+                          <span className="status-pill shrink-0 border-ink-200 bg-white font-mono text-ink-500">
+                            {reason.weight} pts
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-[22px] border border-ink-100 bg-surface-50 p-4">
+                    <div className="mb-3 text-sm font-semibold text-ink-900">Offers</div>
+                    <div className="space-y-4">
+                      <CreditOfferCard offer={run.credit_offer} />
+                      <InsuranceOfferCard offer={run.insurance_offer} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <PanelCard className="p-4">
+                      <div className="mb-3 text-sm font-semibold text-ink-900">Adjustments</div>
+                      <div className="space-y-3">
+                        {run.offer_adjustments.length ? (
+                          run.offer_adjustments.map((reason) => (
+                            <div key={reason.reason_code} className="rounded-2xl border border-ink-100 bg-surface-50 p-4 text-sm text-ink-600">
+                              <div className="font-semibold text-ink-900">{reason.reason_label}</div>
+                              <div className="mt-1">{reason.reason_detail}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="rounded-2xl border border-ink-100 bg-surface-50 p-4 text-sm text-ink-500">
+                            No additional adjustments.
+                          </div>
+                        )}
+                      </div>
+                    </PanelCard>
+
+                    <PanelCard className="p-4">
+                      <div className="mb-3 text-sm font-semibold text-ink-900">Features</div>
+                      <FeatureGrid features={run.features} />
+                    </PanelCard>
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
-        </details>
+        </PanelCard>
       </section>
 
       <section className="space-y-3">

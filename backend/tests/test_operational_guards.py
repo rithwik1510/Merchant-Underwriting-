@@ -35,9 +35,14 @@ def test_send_whatsapp_marks_message_failed_when_twilio_is_unconfigured(client, 
         LMStudioProvider,
         "generate_whatsapp_message",
         lambda self, payload: {
-            "message_body": "FreshBasket Grocers, your offer is ready.",
-            "cta_text": "View offer",
-            "tone_label": "professional",
+            "message_body": (
+                "GrabOn update for FreshBasket Grocers: your pre-approved GrabCredit and GrabInsurance offer is ready. "
+                "You are eligible for working capital up to Rs 46.5L and insurance coverage up to Rs 49.5L. "
+                "This reflects 29.8% year-over-year GMV growth on GrabOn. "
+                "Please review and accept the offer in your merchant dashboard."
+            ),
+            "cta_text": "Review offer",
+            "tone_label": "business_notification",
         },
     )
     monkeypatch.setattr(
@@ -68,9 +73,14 @@ def test_send_whatsapp_uses_mounted_status_callback_route(client, db_session, mo
         LMStudioProvider,
         "generate_whatsapp_message",
         lambda self, payload: {
-            "message_body": "FreshBasket Grocers, your offer is ready.",
-            "cta_text": "View offer",
-            "tone_label": "professional",
+            "message_body": (
+                "GrabOn update for FreshBasket Grocers: your pre-approved GrabCredit and GrabInsurance offer is ready. "
+                "You are eligible for working capital up to Rs 46.5L and insurance coverage up to Rs 49.5L. "
+                "This reflects 29.8% year-over-year GMV growth on GrabOn. "
+                "Please review and accept the offer in your merchant dashboard."
+            ),
+            "cta_text": "Review offer",
+            "tone_label": "business_notification",
         },
     )
 

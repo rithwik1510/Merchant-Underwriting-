@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { BrainCircuit, CheckCircle2, Loader2, MessageSquareText, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { generateExplanation, generateWhatsAppDraft, probeLlmProvider, sendWhatsApp } from "@/lib/api/communications";
-import { ExplanationContent, LLMProbeResponse, WhatsAppMessage } from "@/lib/types/communications";
+import { generateExplanation, generateWhatsAppDraft, sendWhatsApp } from "@/lib/api/communications";
+import { ExplanationContent, WhatsAppMessage } from "@/lib/types/communications";
 import { cn } from "@/lib/utils";
 import { formatDate, formatRelativeTime } from "@/lib/utils/formatters";
 
@@ -71,12 +72,9 @@ export function CommunicationWorkspace({
   const [draft, setDraft] = useState<ExplanationContent | null>(initialDraft);
   const [messages, setMessages] = useState<WhatsAppMessage[]>(initialMessages);
   const [phone, setPhone] = useState(defaultRecipientPhone || "whatsapp:+91");
-  const [probeApiKey, setProbeApiKey] = useState("");
-  const [probeResult, setProbeResult] = useState<LLMProbeResponse | null>(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
-  const [probeLoading, setProbeLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState(false);
 
@@ -154,22 +152,6 @@ export function CommunicationWorkspace({
       setError(err instanceof ApiError ? err.detail : "Message send failed");
     } finally {
       setSendLoading(false);
-    }
-  }
-
-  async function handleProbeClaude() {
-    setProbeLoading(true);
-    setError(null);
-    try {
-      const result = await probeLlmProvider({
-        provider: "claude",
-        api_key_override: probeApiKey.trim() || undefined,
-      });
-      setProbeResult(result);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Claude probe failed");
-    } finally {
-      setProbeLoading(false);
     }
   }
 
@@ -393,39 +375,14 @@ export function CommunicationWorkspace({
                 <div className="mt-4 rounded-[24px] border border-ink-100 bg-surface-card p-4">
                   <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
                     <ShieldCheck className="h-4 w-4 text-go-600" />
-                    Claude probe
+                    Provider settings
                   </div>
-                  <div className="mb-3 flex flex-col gap-3 lg:flex-row">
-                    <input
-                      type="password"
-                      value={probeApiKey}
-                      onChange={(event) => setProbeApiKey(event.target.value)}
-                      placeholder="Optional temporary Claude API key for probe"
-                      className="flex-1 rounded-2xl border border-ink-200 bg-surface-card px-4 py-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-go-400 focus:outline-none"
-                    />
-                    <button onClick={handleProbeClaude} disabled={probeLoading} className="btn-outline min-w-[180px] justify-center">
-                      {probeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                      Probe Claude
-                    </button>
+                  <div className="mb-4 rounded-2xl border border-ink-100 bg-surface-50 px-4 py-3 text-sm text-ink-700">
+                    Configure Claude API key, Claude model, LM Studio model, and active provider in Settings.
                   </div>
-                  {probeResult ? (
-                    <div className="mb-4 rounded-2xl border border-ink-100 bg-surface-50 px-4 py-3 text-sm text-ink-700">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={cn("status-pill", probeResult.ok ? "border-go-200 bg-go-50 text-go-700" : "border-risk-200 bg-risk-50 text-risk-700")}>
-                          {probeResult.status}
-                        </span>
-                        <span className="status-pill border-ink-200 bg-white text-ink-500">{probeResult.model}</span>
-                        {probeResult.latency_ms != null ? (
-                          <span className="status-pill border-ink-200 bg-white text-ink-500">
-                            {probeResult.latency_ms} ms
-                          </span>
-                        ) : null}
-                      </div>
-                      {probeResult.error_detail ? (
-                        <p className="mt-2 text-xs text-ink-500">{probeResult.error_detail}</p>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  <Link href="/settings" className="btn-outline mb-4 inline-flex">
+                    Open settings
+                  </Link>
 
                   <div className="flex flex-col gap-3 lg:flex-row">
                     <input

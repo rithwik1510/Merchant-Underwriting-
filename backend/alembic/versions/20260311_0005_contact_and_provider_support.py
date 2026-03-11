@@ -16,16 +16,23 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "merchants",
-        sa.Column("registered_whatsapp_number", sa.String(length=30), nullable=True),
-    )
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {column["name"] for column in inspector.get_columns("merchants")}
+    if "registered_whatsapp_number" not in columns:
+        op.add_column(
+            "merchants",
+            sa.Column("registered_whatsapp_number", sa.String(length=30), nullable=True),
+        )
     op.execute(
         "UPDATE merchants SET registered_whatsapp_number = 'whatsapp:+910000000000' "
         "WHERE registered_whatsapp_number IS NULL"
     )
-    op.alter_column("merchants", "registered_whatsapp_number", nullable=False)
 
 
 def downgrade() -> None:
-    op.drop_column("merchants", "registered_whatsapp_number")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = {column["name"] for column in inspector.get_columns("merchants")}
+    if "registered_whatsapp_number" in columns:
+        op.drop_column("merchants", "registered_whatsapp_number")
