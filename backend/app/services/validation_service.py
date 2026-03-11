@@ -9,7 +9,7 @@ NUMBER_PATTERN = re.compile(r"\d+(?:\.\d+)?")
 def validate_generation_output(payload: dict, output: dict, generation_type: str) -> list[str]:
     errors: list[str] = []
     required_keys = {
-        "decision_explanation": {"summary", "rationale_sentences", "key_strengths", "key_risks"},
+        "decision_explanation": {"summary", "rationale_sentences", "key_strengths", "key_risks", "cited_metrics"},
         "whatsapp_message": {"message_body", "cta_text", "tone_label"},
     }[generation_type]
 
@@ -23,6 +23,20 @@ def validate_generation_output(payload: dict, output: dict, generation_type: str
     if not found_tokens.issubset(allowed_tokens):
         extras = sorted(found_tokens - allowed_tokens)
         errors.append(f"Unexpected numeric tokens: {', '.join(extras)}")
+
+    if generation_type == "decision_explanation":
+        rationale_sentences = output.get("rationale_sentences")
+        if not isinstance(rationale_sentences, list) or not (3 <= len(rationale_sentences) <= 5):
+            errors.append("Explanation must contain between 3 and 5 rationale sentences")
+        cited_metrics = output.get("cited_metrics")
+        if not isinstance(cited_metrics, list) or not cited_metrics:
+            errors.append("Explanation must include cited metrics")
+        benchmark_metrics = payload.get("benchmark_metrics", {})
+        benchmark_present = bool(
+            benchmark_metrics.get("category_refund_rate") or benchmark_metrics.get("category_customer_return_rate")
+        )
+        if benchmark_present and text_blob.lower().count("benchmark") == 0 and " versus " not in text_blob.lower():
+            errors.append("Benchmark-backed explanations must reference category comparison")
 
     return errors
 

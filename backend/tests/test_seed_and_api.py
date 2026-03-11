@@ -29,6 +29,8 @@ def test_list_merchants_returns_seeded_merchants(client) -> None:
     body = response.json()
     assert len(body) == 10
     assert any(merchant["merchant_name"] == "FreshBasket Grocers" for merchant in body)
+    assert all(merchant["registered_whatsapp_number"].startswith("whatsapp:+91") for merchant in body)
+    assert all(merchant["latest_run_id"] is None for merchant in body)
 
 
 def test_merchant_detail_includes_monthly_metrics(client) -> None:
@@ -38,6 +40,19 @@ def test_merchant_detail_includes_monthly_metrics(client) -> None:
     body = response.json()
     assert body["merchant_name"] == "WanderDeals Travel"
     assert len(body["monthly_metrics"]) == 7
+    assert body["registered_whatsapp_number"].startswith("whatsapp:+91")
+
+
+def test_list_merchants_includes_latest_underwriting_snapshot(client) -> None:
+    client.post("/api/seed/init")
+    client.post("/api/underwriting/run/m_freshbasket")
+
+    response = client.get("/api/merchants")
+    assert response.status_code == 200
+    freshbasket = next(merchant for merchant in response.json() if merchant["merchant_id"] == "m_freshbasket")
+    assert freshbasket["latest_decision"] == "approved"
+    assert freshbasket["latest_risk_tier"] == "tier_1"
+    assert freshbasket["latest_credit_limit"] is not None
 
 
 def test_benchmarks_and_policy_are_available(client) -> None:

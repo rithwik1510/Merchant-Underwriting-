@@ -27,6 +27,13 @@ class MerchantSummaryResponse(BaseModel):
     unique_customer_count: int
     customer_return_rate: Decimal
     return_and_refund_rate: Decimal
+    registered_whatsapp_number: str
+    latest_run_id: int | None = None
+    latest_decision: str | None = None
+    latest_risk_tier: str | None = None
+    latest_credit_limit: float | None = None
+    latest_insurance_coverage: float | None = None
+    latest_run_at: datetime | None = None
 
 
 class MerchantDetailResponse(MerchantSummaryResponse):
@@ -158,12 +165,28 @@ class ExplanationContentResponse(BaseModel):
     created_at: datetime
 
 
+class LLMProbeRequest(BaseModel):
+    provider: str
+    api_key_override: str | None = None
+    model_override: str | None = None
+
+
+class LLMProbeResponse(BaseModel):
+    provider: str
+    model: str
+    ok: bool
+    status: str
+    latency_ms: int | None = None
+    used_override_key: bool = False
+    error_detail: str | None = None
+
+
 class WhatsAppDraftRequest(BaseModel):
     message_type: str = "combined_offer"
 
 
 class WhatsAppSendRequest(BaseModel):
-    recipient_phone: str
+    recipient_phone: str | None = None
     message_type: str = "combined_offer"
 
 

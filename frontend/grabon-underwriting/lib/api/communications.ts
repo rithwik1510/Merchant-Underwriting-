@@ -1,6 +1,7 @@
 import { apiFetch } from "./client";
 import {
   ExplanationContent,
+  LLMProbeResponse,
   WhatsAppMessage,
   CommunicationsResponse,
 } from "../types/communications";
@@ -21,7 +22,7 @@ export const generateWhatsAppDraft = (
 
 export const sendWhatsApp = (
   runId: number | string,
-  body: { recipient_phone: string; message_type: string }
+  body: { recipient_phone?: string; message_type: string }
 ) =>
   apiFetch<WhatsAppMessage>(`/underwriting/runs/${runId}/send-whatsapp`, {
     method: "POST",
@@ -30,3 +31,13 @@ export const sendWhatsApp = (
 
 export const getCommunications = (runId: number | string) =>
   apiFetch<CommunicationsResponse>(`/underwriting/runs/${runId}/communications`);
+
+export const probeLlmProvider = (body: {
+  provider: "claude" | "lmstudio";
+  api_key_override?: string;
+  model_override?: string;
+}) =>
+  apiFetch<LLMProbeResponse>("/llm/probe", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });

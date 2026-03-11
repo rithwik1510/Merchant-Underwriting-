@@ -208,6 +208,9 @@ APP_PORT=8000
 LMSTUDIO_BASE_URL=http://127.0.0.1:1234
 LMSTUDIO_MODEL=qwen/qwen3-8b
 LLM_PROVIDER=lmstudio
+CLAUDE_API_KEY=
+CLAUDE_MODEL=claude-3-5-sonnet-latest
+CLAUDE_BASE_URL=https://api.anthropic.com/v1
 
 APP_BASE_URL=http://127.0.0.1:8000
 TWILIO_ACCOUNT_SID=your_sid
@@ -251,6 +254,16 @@ Run the full local verification pass from the project root:
 ```
 
 This runs backend tests, frontend lint, and a frontend production build.
+
+You can also probe provider connectivity before a demo:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/llm/probe \
+  -H "Content-Type: application/json" \
+  -d "{\"provider\":\"claude\"}"
+```
+
+For Claude, an `api_key_override` can be supplied in the probe request for one-off validation only; it is never persisted.
 
 ## WhatsApp Test Run
 

@@ -51,11 +51,14 @@ def _seed_merchants(db: Session) -> tuple[int, int]:
                 seasonality_index=merchant_seed.seasonality_index,
                 deal_exclusivity_rate=merchant_seed.deal_exclusivity_rate,
                 return_and_refund_rate=merchant_seed.return_and_refund_rate,
+                registered_whatsapp_number=merchant_seed.registered_whatsapp_number,
                 seed_intended_outcome=merchant_seed.seed_intended_outcome,
             )
             db.add(merchant)
             db.flush()
             merchants_created += 1
+        elif merchant.registered_whatsapp_number != merchant_seed.registered_whatsapp_number:
+            merchant.registered_whatsapp_number = merchant_seed.registered_whatsapp_number
 
         existing_months = set(
             db.scalars(

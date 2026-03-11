@@ -23,11 +23,17 @@ def test_explanation_generation_persists_success(client, monkeypatch) -> None:
             "summary": "FreshBasket Grocers is approved at Tier 1.",
             "rationale_sentences": [
                 "FreshBasket Grocers shows strong and stable merchant performance.",
-                "Its refund rate is below category expectations and return behavior is strong.",
-                "The final offer terms come from the deterministic underwriting engine.",
+                "Its GMV growth of 29.8% shows sustained business momentum.",
+                "Its customer return rate of 78% is stronger than the category benchmark of 70%.",
+                "Its refund and return rate of 1.8% remains below the category benchmark of 2.8%.",
             ],
             "key_strengths": ["Stable GMV trend", "Low refund pressure"],
             "key_risks": [],
+            "cited_metrics": [
+                {"label": "GMV growth (12M)", "value": "29.8%", "comparison_text": "year-over-year GMV trend"},
+                {"label": "Customer return rate", "value": "78%", "benchmark_value": "70%"},
+                {"label": "Refund / return rate", "value": "1.8%", "benchmark_value": "2.8%"},
+            ],
         },
     )
 
@@ -37,6 +43,7 @@ def test_explanation_generation_persists_success(client, monkeypatch) -> None:
     assert body["status"] == "success"
     assert body["generation_type"] == "decision_explanation"
     assert "summary" in body["output_payload_json"]
+    assert len(body["output_payload_json"]["rationale_sentences"]) == 4
 
 
 def test_explanation_generation_falls_back_on_validation_failure(client, monkeypatch) -> None:
@@ -50,6 +57,7 @@ def test_explanation_generation_falls_back_on_validation_failure(client, monkeyp
             "rationale_sentences": ["This adds 999999 which is not allowed."],
             "key_strengths": ["Invented 999999"],
             "key_risks": [],
+            "cited_metrics": [],
         },
     )
 
@@ -59,6 +67,7 @@ def test_explanation_generation_falls_back_on_validation_failure(client, monkeyp
     assert body["status"] == "fallback"
     assert body["provider_name"] == "template_fallback"
     assert body["validation_errors_json"]
+    assert 3 <= len(body["output_payload_json"]["rationale_sentences"]) <= 5
 
 
 def test_send_whatsapp_and_status_callback(client, monkeypatch) -> None:
@@ -109,12 +118,13 @@ def test_send_whatsapp_and_status_callback(client, monkeypatch) -> None:
 
     send_response = client.post(
         f"/api/underwriting/runs/{run_id}/send-whatsapp",
-        json={"recipient_phone": "whatsapp:+919999999999", "message_type": "combined_offer"},
+        json={"message_type": "combined_offer"},
     )
     assert send_response.status_code == 200
     send_body = send_response.json()
     assert send_body["delivery_status"] == "queued"
     assert send_body["twilio_message_sid"] == "SM123"
+    assert send_body["recipient_phone"].startswith("whatsapp:+91")
 
     webhook_response = client.post(
         "/api/underwriting/webhooks/twilio/status",
@@ -207,3 +217,25 @@ def test_template_messages_use_compact_merchant_facing_money(client, monkeypatch
     insurance_body = insurance_response.json()["output_payload_json"]["message_body"]
     assert "K" in insurance_body or "L" in insurance_body
     assert "tier" not in insurance_body.lower()
+
+
+def test_explanation_generation_falls_back_if_rationale_shape_is_too_short(client, monkeypatch) -> None:
+    run_id = _create_run(client)
+
+    monkeypatch.setattr(
+        LMStudioProvider,
+        "generate_explanation",
+        lambda self, payload: {
+            "summary": "FreshBasket Grocers is approved.",
+            "rationale_sentences": ["Too short."],
+            "key_strengths": ["Stable GMV trend"],
+            "key_risks": [],
+            "cited_metrics": [{"label": "GMV growth (12M)", "value": "29.8%"}],
+        },
+    )
+
+    response = client.post(f"/api/underwriting/runs/{run_id}/explanation")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "fallback"
+    assert 3 <= len(body["output_payload_json"]["rationale_sentences"]) <= 5

@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     lmstudio_base_url: str = "http://localhost:1234/v1"
     lmstudio_model: str = "qwen3:8b"
     llm_provider: str = "lmstudio"
+    claude_api_key: str | None = None
+    claude_model: str = "claude-3-5-sonnet-latest"
+    claude_base_url: str = "https://api.anthropic.com/v1"
     app_base_url: str = "http://localhost:8000"
     twilio_account_sid: str | None = None
     twilio_auth_token: str | None = None

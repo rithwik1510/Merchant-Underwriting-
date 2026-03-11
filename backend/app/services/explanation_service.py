@@ -5,8 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
-from app.models import LLMGeneration, LLMGenerationStatus, LLMGenerationType, UnderwritingRun
+from app.models import LLMGeneration, LLMGenerationStatus, LLMGenerationType, Merchant, UnderwritingRun
 from app.schemas import CommunicationsResponse, ExplanationContentResponse, WhatsAppMessageResponse
+from app.services.claude_provider import ClaudeProvider
 from app.services.explanation_payload_builder import build_explanation_payload, build_whatsapp_payload
 from app.services.lmstudio_provider import LMStudioProvider
 from app.services.template_provider import TemplateProvider
@@ -61,6 +62,7 @@ def _load_run(db: Session, run_id: int) -> UnderwritingRun:
         select(UnderwritingRun)
         .options(
             selectinload(UnderwritingRun.merchant),
+            selectinload(UnderwritingRun.merchant).selectinload(Merchant.monthly_metrics),
             selectinload(UnderwritingRun.feature_snapshot),
             selectinload(UnderwritingRun.credit_offer),
             selectinload(UnderwritingRun.insurance_offer),
@@ -76,8 +78,7 @@ def _load_run(db: Session, run_id: int) -> UnderwritingRun:
 
 
 def _generate_with_fallback(db: Session, run_id: int, payload: dict, generation_type: LLMGenerationType) -> LLMGeneration:
-    settings = get_settings()
-    primary = LMStudioProvider() if settings.llm_provider == "lmstudio" else TemplateProvider()
+    primary = _resolve_primary_provider()
     fallback = TemplateProvider()
 
     try:
@@ -137,6 +138,15 @@ def _call_provider(provider, payload: dict, generation_type: LLMGenerationType) 
     if generation_type == LLMGenerationType.DECISION_EXPLANATION:
         return provider.generate_explanation(payload)
     return provider.generate_whatsapp_message(payload)
+
+
+def _resolve_primary_provider():
+    settings = get_settings()
+    if settings.llm_provider == "claude":
+        return ClaudeProvider()
+    if settings.llm_provider == "lmstudio":
+        return LMStudioProvider()
+    return TemplateProvider()
 
 
 def _persist_generation(

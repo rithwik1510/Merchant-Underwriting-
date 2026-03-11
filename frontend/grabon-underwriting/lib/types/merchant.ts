@@ -23,6 +23,13 @@ export interface MerchantSummary {
   unique_customer_count: number;
   customer_return_rate: number;
   return_and_refund_rate: number;
+  registered_whatsapp_number: string;
+  latest_run_id: number | null;
+  latest_decision: string | null;
+  latest_risk_tier: string | null;
+  latest_credit_limit: number | null;
+  latest_insurance_coverage: number | null;
+  latest_run_at: string | null;
 }
 
 export interface MonthlyMetric {

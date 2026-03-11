@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { BrainCircuit, CheckCircle2, Loader2, MessageSquareText, RefreshCw, Send } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BrainCircuit, CheckCircle2, Loader2, MessageSquareText, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { generateExplanation, generateWhatsAppDraft, sendWhatsApp } from "@/lib/api/communications";
-import { ExplanationContent, WhatsAppMessage } from "@/lib/types/communications";
+import { generateExplanation, generateWhatsAppDraft, probeLlmProvider, sendWhatsApp } from "@/lib/api/communications";
+import { ExplanationContent, LLMProbeResponse, WhatsAppMessage } from "@/lib/types/communications";
 import { cn } from "@/lib/utils";
 import { formatDate, formatRelativeTime } from "@/lib/utils/formatters";
 
@@ -12,6 +12,7 @@ type MessageType = "credit_offer" | "insurance_offer" | "combined_offer";
 
 interface CommunicationWorkspaceProps {
   runId: number;
+  defaultRecipientPhone?: string | null;
   initialExplanation?: ExplanationContent | null;
   initialDraft?: ExplanationContent | null;
   initialMessages?: WhatsAppMessage[];
@@ -60,6 +61,7 @@ function normalizeWhatsAppPhone(value: string) {
 
 export function CommunicationWorkspace({
   runId,
+  defaultRecipientPhone,
   initialExplanation = null,
   initialDraft = null,
   initialMessages = [],
@@ -68,10 +70,13 @@ export function CommunicationWorkspace({
   const [explanation, setExplanation] = useState<ExplanationContent | null>(initialExplanation);
   const [draft, setDraft] = useState<ExplanationContent | null>(initialDraft);
   const [messages, setMessages] = useState<WhatsAppMessage[]>(initialMessages);
-  const [phone, setPhone] = useState("whatsapp:+91");
+  const [phone, setPhone] = useState(defaultRecipientPhone || "whatsapp:+91");
+  const [probeApiKey, setProbeApiKey] = useState("");
+  const [probeResult, setProbeResult] = useState<LLMProbeResponse | null>(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  const [probeLoading, setProbeLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState(false);
 
@@ -79,6 +84,27 @@ export function CommunicationWorkspace({
     () => MESSAGE_OPTIONS.find((option) => option.value === messageType) ?? MESSAGE_OPTIONS[2],
     [messageType]
   );
+  const explanationPayload = explanation?.output_payload_json;
+  const rationaleSentences = Array.isArray(explanationPayload?.rationale_sentences)
+    ? explanationPayload.rationale_sentences.map(String)
+    : [];
+  const citedMetrics = Array.isArray(explanationPayload?.cited_metrics)
+    ? explanationPayload.cited_metrics
+    : [];
+  const explanationSummary =
+    typeof explanationPayload?.summary === "string" ? explanationPayload.summary : "";
+  const explanationStrengths = Array.isArray(explanationPayload?.key_strengths)
+    ? explanationPayload.key_strengths.map(String)
+    : [];
+  const explanationRisks = Array.isArray(explanationPayload?.key_risks)
+    ? explanationPayload.key_risks.map(String)
+    : [];
+
+  useEffect(() => {
+    if (defaultRecipientPhone) {
+      setPhone(defaultRecipientPhone);
+    }
+  }, [defaultRecipientPhone]);
 
   async function handleGenerateExplanation() {
     setExplanationLoading(true);
@@ -107,8 +133,8 @@ export function CommunicationWorkspace({
   }
 
   async function handleSend() {
-    const normalizedPhone = normalizeWhatsAppPhone(phone);
-    if (!normalizedPhone || normalizedPhone === "whatsapp:+91") {
+    const normalizedPhone = phone ? normalizeWhatsAppPhone(phone) : "";
+    if (!normalizedPhone && !defaultRecipientPhone) {
       setError("Please enter a valid WhatsApp number");
       return;
     }
@@ -117,17 +143,33 @@ export function CommunicationWorkspace({
     setError(null);
     try {
       const message = await sendWhatsApp(runId, {
-        recipient_phone: normalizedPhone,
+        recipient_phone: normalizedPhone || undefined,
         message_type: messageType,
       });
       setMessages((previous) => [message, ...previous]);
-      setPhone(normalizedPhone);
+      if (normalizedPhone) setPhone(normalizedPhone);
       setSendSuccess(true);
       setTimeout(() => setSendSuccess(false), 2200);
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Message send failed");
     } finally {
       setSendLoading(false);
+    }
+  }
+
+  async function handleProbeClaude() {
+    setProbeLoading(true);
+    setError(null);
+    try {
+      const result = await probeLlmProvider({
+        provider: "claude",
+        api_key_override: probeApiKey.trim() || undefined,
+      });
+      setProbeResult(result);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.detail : "Claude probe failed");
+    } finally {
+      setProbeLoading(false);
     }
   }
 
@@ -209,17 +251,84 @@ export function CommunicationWorkspace({
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Generating...
                     </div>
-                  ) : explanation && explanationText ? (
+                  ) : explanation && (explanationText || rationaleSentences.length) ? (
                     <div className="space-y-3">
                       <div className="flex flex-wrap gap-2">
                         <span className="status-pill border-go-200 bg-go-50 text-go-700">
                           {explanation.status.replace(/_/g, " ")}
                         </span>
+                        <span className="status-pill border-ink-200 bg-white text-ink-500">
+                          {explanation.provider_name}
+                        </span>
                         <span className="status-pill border-ink-200 bg-surface-50 text-ink-500">
                           {formatDate(explanation.created_at)}
                         </span>
                       </div>
-                      <p className="text-sm leading-6 text-ink-700">{explanationText}</p>
+                      {explanationSummary ? (
+                        <p className="text-sm font-medium leading-6 text-ink-800">{explanationSummary}</p>
+                      ) : null}
+                      {rationaleSentences.length ? (
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+                            Why this offer
+                          </div>
+                          <div className="space-y-2">
+                            {rationaleSentences.map((sentence, index) => (
+                              <div key={`${sentence}-${index}`} className="rounded-2xl border border-ink-100 bg-white px-3 py-3 text-sm leading-6 text-ink-700">
+                                <span className="mr-2 font-semibold text-go-600">{index + 1}.</span>
+                                {sentence}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {citedMetrics.length ? (
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+                            Cited metrics
+                          </div>
+                          <div className="grid gap-2 md:grid-cols-2">
+                            {citedMetrics.map((metric, index) => (
+                              <div key={`${String(metric.label)}-${index}`} className="rounded-2xl border border-ink-100 bg-white px-3 py-3">
+                                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+                                  {String(metric.label)}
+                                </div>
+                                <div className="mt-1 text-base font-semibold text-ink-900">
+                                  {String(metric.value)}
+                                </div>
+                                {metric.benchmark_value ? (
+                                  <div className="mt-1 text-xs text-ink-500">
+                                    Benchmark: {String(metric.benchmark_value)}
+                                  </div>
+                                ) : null}
+                                {metric.comparison_text ? (
+                                  <div className="mt-1 text-xs text-ink-500">
+                                    {String(metric.comparison_text)}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {explanationStrengths.length || explanationRisks.length ? (
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="rounded-2xl border border-go-200 bg-go-50 px-3 py-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-go-700">Strengths</div>
+                            <p className="mt-1 text-sm text-go-800">
+                              {explanationStrengths.join(" ") || "No extra strengths captured."}
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-risk-200 bg-risk-50 px-3 py-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-risk-700">Risks</div>
+                            <p className="mt-1 text-sm text-risk-800">
+                              {explanationRisks.join(" ") || "No material additional risks captured."}
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ) : (
                     <p className="text-sm text-ink-500">Generate summary first.</p>
@@ -282,6 +391,42 @@ export function CommunicationWorkspace({
                 </div>
 
                 <div className="mt-4 rounded-[24px] border border-ink-100 bg-surface-card p-4">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+                    <ShieldCheck className="h-4 w-4 text-go-600" />
+                    Claude probe
+                  </div>
+                  <div className="mb-3 flex flex-col gap-3 lg:flex-row">
+                    <input
+                      type="password"
+                      value={probeApiKey}
+                      onChange={(event) => setProbeApiKey(event.target.value)}
+                      placeholder="Optional temporary Claude API key for probe"
+                      className="flex-1 rounded-2xl border border-ink-200 bg-surface-card px-4 py-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-go-400 focus:outline-none"
+                    />
+                    <button onClick={handleProbeClaude} disabled={probeLoading} className="btn-outline min-w-[180px] justify-center">
+                      {probeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                      Probe Claude
+                    </button>
+                  </div>
+                  {probeResult ? (
+                    <div className="mb-4 rounded-2xl border border-ink-100 bg-surface-50 px-4 py-3 text-sm text-ink-700">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={cn("status-pill", probeResult.ok ? "border-go-200 bg-go-50 text-go-700" : "border-risk-200 bg-risk-50 text-risk-700")}>
+                          {probeResult.status}
+                        </span>
+                        <span className="status-pill border-ink-200 bg-white text-ink-500">{probeResult.model}</span>
+                        {probeResult.latency_ms != null ? (
+                          <span className="status-pill border-ink-200 bg-white text-ink-500">
+                            {probeResult.latency_ms} ms
+                          </span>
+                        ) : null}
+                      </div>
+                      {probeResult.error_detail ? (
+                        <p className="mt-2 text-xs text-ink-500">{probeResult.error_detail}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   <div className="flex flex-col gap-3 lg:flex-row">
                     <input
                       type="tel"
@@ -300,7 +445,7 @@ export function CommunicationWorkspace({
                     </button>
                   </div>
                   <p className="mt-2 text-xs text-ink-400">
-                    Format: <span className="font-mono">whatsapp:+918096534845</span>
+                    Default uses the registered merchant number. Override if you need a sandbox test target.
                   </p>
                 </div>
               </div>

@@ -13,6 +13,9 @@ function normalizeMerchantSummary(raw: MerchantSummary): MerchantSummary {
     unique_customer_count: toNumber(raw.unique_customer_count),
     customer_return_rate: toNumber(raw.customer_return_rate),
     return_and_refund_rate: toNumber(raw.return_and_refund_rate),
+    latest_credit_limit: raw.latest_credit_limit == null ? null : toNumber(raw.latest_credit_limit),
+    latest_insurance_coverage:
+      raw.latest_insurance_coverage == null ? null : toNumber(raw.latest_insurance_coverage),
   };
 }
 

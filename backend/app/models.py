@@ -29,6 +29,7 @@ class Merchant(Base):
     seasonality_index: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
     deal_exclusivity_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
     return_and_refund_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    registered_whatsapp_number: Mapped[str] = mapped_column(String(30), nullable=False)
     seed_intended_outcome: Mapped[str] = mapped_column(String(50), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)

@@ -30,6 +30,7 @@ class MerchantSeed:
     seasonality_index: Decimal
     deal_exclusivity_rate: Decimal
     return_and_refund_rate: Decimal
+    registered_whatsapp_number: str
     seed_intended_outcome: str
     monthly_metrics: list[MonthlyMetricSeed]
 
@@ -110,6 +111,7 @@ MERCHANTS = [
         seasonality_index=Decimal("1.20"),
         deal_exclusivity_rate=Decimal("42.00"),
         return_and_refund_rate=Decimal("1.80"),
+        registered_whatsapp_number="whatsapp:+919100000001",
         seed_intended_outcome="tier_1",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("2450000"), 3380, 8200, Decimal("1.60")),
@@ -137,6 +139,7 @@ MERCHANTS = [
         seasonality_index=Decimal("2.10"),
         deal_exclusivity_rate=Decimal("35.00"),
         return_and_refund_rate=Decimal("4.90"),
+        registered_whatsapp_number="whatsapp:+919100000002",
         seed_intended_outcome="tier_2",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("1180000"), 760, 2400, Decimal("4.50")),
@@ -164,6 +167,7 @@ MERCHANTS = [
         seasonality_index=Decimal("1.90"),
         deal_exclusivity_rate=Decimal("18.00"),
         return_and_refund_rate=Decimal("14.00"),
+        registered_whatsapp_number="whatsapp:+919100000003",
         seed_intended_outcome="rejected_refund_rate",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("1760000"), 215, 780, Decimal("13.80")),
@@ -191,6 +195,7 @@ MERCHANTS = [
         seasonality_index=Decimal("2.80"),
         deal_exclusivity_rate=Decimal("24.00"),
         return_and_refund_rate=Decimal("7.80"),
+        registered_whatsapp_number="whatsapp:+919100000004",
         seed_intended_outcome="rejected_insufficient_history",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 6), Decimal("890000"), 74, 228, Decimal("7.40")),
@@ -213,6 +218,7 @@ MERCHANTS = [
         seasonality_index=Decimal("1.70"),
         deal_exclusivity_rate=Decimal("31.00"),
         return_and_refund_rate=Decimal("4.20"),
+        registered_whatsapp_number="whatsapp:+919100000005",
         seed_intended_outcome="manual_review_volatility",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("740000"), 452, 1620, Decimal("4.10")),
@@ -240,6 +246,7 @@ MERCHANTS = [
         seasonality_index=Decimal("1.50"),
         deal_exclusivity_rate=Decimal("39.00"),
         return_and_refund_rate=Decimal("4.40"),
+        registered_whatsapp_number="whatsapp:+919100000006",
         seed_intended_outcome="tier_1",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("1320000"), 368, 1220, Decimal("4.20")),
@@ -267,6 +274,7 @@ MERCHANTS = [
         seasonality_index=Decimal("1.40"),
         deal_exclusivity_rate=Decimal("28.00"),
         return_and_refund_rate=Decimal("3.70"),
+        registered_whatsapp_number="whatsapp:+919100000007",
         seed_intended_outcome="tier_2",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("910000"), 428, 1530, Decimal("3.40")),
@@ -294,6 +302,7 @@ MERCHANTS = [
         seasonality_index=Decimal("2.30"),
         deal_exclusivity_rate=Decimal("16.00"),
         return_and_refund_rate=Decimal("6.10"),
+        registered_whatsapp_number="whatsapp:+919100000008",
         seed_intended_outcome="tier_3_manual_review",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("760000"), 576, 1120, Decimal("5.90")),
@@ -321,6 +330,7 @@ MERCHANTS = [
         seasonality_index=Decimal("1.30"),
         deal_exclusivity_rate=Decimal("22.00"),
         return_and_refund_rate=Decimal("2.90"),
+        registered_whatsapp_number="whatsapp:+919100000009",
         seed_intended_outcome="tier_2",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("1580000"), 2890, 7010, Decimal("2.60")),
@@ -348,6 +358,7 @@ MERCHANTS = [
         seasonality_index=Decimal("3.20"),
         deal_exclusivity_rate=Decimal("27.00"),
         return_and_refund_rate=Decimal("6.90"),
+        registered_whatsapp_number="whatsapp:+919100000010",
         seed_intended_outcome="reduced_credit_high_premium",
         monthly_metrics=[
             MonthlyMetricSeed(month_start(2025, 1), Decimal("860000"), 61, 198, Decimal("6.50")),

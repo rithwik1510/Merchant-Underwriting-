@@ -6,7 +6,7 @@ import { ArrowUpRight, AlertCircle, Users } from "lucide-react";
 import { MerchantSummary } from "@/lib/types/merchant";
 import { getCategoryConfig } from "@/lib/constants/categories";
 import { OutcomeBadge } from "./OutcomeBadge";
-import { formatNumber, formatPercentRaw } from "@/lib/utils/formatters";
+import { formatCurrency, formatNumber, formatPercentRaw } from "@/lib/utils/formatters";
 import { CategoryGlyph } from "@/components/ui/CategoryGlyph";
 
 interface MerchantCardProps {
@@ -16,6 +16,10 @@ interface MerchantCardProps {
 
 export function MerchantCard({ merchant, index }: MerchantCardProps) {
   const cat = getCategoryConfig(merchant.category);
+  const latestStatus =
+    merchant.latest_decision && merchant.latest_risk_tier
+      ? `${merchant.latest_decision.replace(/_/g, " ")} | ${merchant.latest_risk_tier.replace(/_/g, " ")}`
+      : "Not underwritten yet";
 
   return (
     <motion.div
@@ -71,6 +75,19 @@ export function MerchantCard({ merchant, index }: MerchantCardProps) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="mt-3 rounded-2xl border border-ink-100 bg-white px-3.5 py-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">Latest snapshot</div>
+            <div className="mt-1 text-sm font-semibold text-ink-800">{latestStatus}</div>
+            {merchant.latest_run_id ? (
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-ink-500">
+                <span>Credit {formatCurrency(merchant.latest_credit_limit)}</span>
+                <span>Cover {formatCurrency(merchant.latest_insurance_coverage)}</span>
+              </div>
+            ) : (
+              <div className="mt-1 text-xs text-ink-500">Run underwriting to generate offers.</div>
+            )}
           </div>
 
           <div className="mt-3 flex items-center justify-between">

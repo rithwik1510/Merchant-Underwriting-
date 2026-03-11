@@ -58,6 +58,7 @@ export default async function CommunicatePage({ params }: Params) {
 
       <CommunicationWorkspace
         runId={run.run_id}
+        defaultRecipientPhone={run.merchant.registered_whatsapp_number}
         initialExplanation={comms?.latest_explanation ?? null}
         initialDraft={comms?.latest_whatsapp_draft ?? null}
         initialMessages={comms?.whatsapp_messages ?? []}

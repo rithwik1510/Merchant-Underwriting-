@@ -14,7 +14,7 @@ from app.schemas import WhatsAppMessageResponse
 from app.services.explanation_service import generate_run_whatsapp_message
 
 
-def send_whatsapp_for_run(db: Session, run_id: int, recipient_phone: str, message_type: str) -> WhatsAppMessageResponse:
+def send_whatsapp_for_run(db: Session, run_id: int, recipient_phone: str | None, message_type: str) -> WhatsAppMessageResponse:
     run = db.scalar(
         select(UnderwritingRun)
         .options(selectinload(UnderwritingRun.llm_generations))
@@ -24,6 +24,9 @@ def send_whatsapp_for_run(db: Session, run_id: int, recipient_phone: str, messag
         raise HTTPException(status_code=404, detail="Underwriting run not found")
     if run.decision.value == "rejected":
         raise HTTPException(status_code=400, detail="Rejected merchants cannot receive outbound WhatsApp in Phase 3")
+    recipient_phone = recipient_phone or run.merchant.registered_whatsapp_number
+    if not recipient_phone:
+        raise HTTPException(status_code=400, detail="Merchant does not have a registered WhatsApp number")
 
     draft = generate_run_whatsapp_message(db, run_id, message_type)
     latest_generation = db.scalar(

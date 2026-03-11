@@ -18,7 +18,10 @@ class LMStudioProvider:
     def generate_explanation(self, payload: dict) -> dict:
         return self._generate(
             payload,
-            "Return strict JSON with keys: summary, rationale_sentences, key_strengths, key_risks.",
+            (
+                "Return strict JSON with keys: summary, rationale_sentences, key_strengths, "
+                "key_risks, cited_metrics. rationale_sentences must contain exactly 3 to 5 concise sentences."
+            ),
         )
 
     def generate_whatsapp_message(self, payload: dict) -> dict:
