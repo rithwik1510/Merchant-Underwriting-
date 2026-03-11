@@ -5,11 +5,11 @@ import json
 
 import httpx
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
-from app.models import LLMGenerationType, UnderwritingRun, WhatsAppDeliveryStatus, WhatsAppMessage, WhatsAppMessageType
+from app.models import LLMGeneration, LLMGenerationType, UnderwritingRun, WhatsAppDeliveryStatus, WhatsAppMessage, WhatsAppMessageType
 from app.schemas import WhatsAppMessageResponse
 from app.services.explanation_service import generate_run_whatsapp_message
 
@@ -27,10 +27,13 @@ def send_whatsapp_for_run(db: Session, run_id: int, recipient_phone: str, messag
 
     draft = generate_run_whatsapp_message(db, run_id, message_type)
     latest_generation = db.scalar(
-        select(UnderwritingRun)
-        .options(selectinload(UnderwritingRun.llm_generations))
-        .where(UnderwritingRun.id == run_id)
-    ).llm_generations[-1]
+        select(LLMGeneration)
+        .where(
+            LLMGeneration.underwriting_run_id == run_id,
+            LLMGeneration.generation_type == LLMGenerationType.WHATSAPP_MESSAGE,
+        )
+        .order_by(desc(LLMGeneration.created_at), desc(LLMGeneration.id))
+    )
 
     message = WhatsAppMessage(
         underwriting_run_id=run_id,
@@ -51,7 +54,7 @@ def send_whatsapp_for_run(db: Session, run_id: int, recipient_phone: str, messag
         return _map_message(message)
 
     auth_header = base64.b64encode(f"{settings.twilio_account_sid}:{settings.twilio_auth_token}".encode()).decode()
-    callback_url = f"{settings.app_base_url.rstrip('/')}/api/webhooks/twilio/status"
+    callback_url = f"{settings.app_base_url.rstrip('/')}/api/underwriting/webhooks/twilio/status"
     request_data = {
         "To": recipient_phone,
         "StatusCallback": callback_url,

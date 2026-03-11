@@ -84,7 +84,7 @@ def _generate_with_fallback(db: Session, run_id: int, payload: dict, generation_
         output = _call_provider(primary, payload, generation_type)
         errors = validate_generation_output(payload, output, generation_type.value)
         if errors:
-            failed = _persist_generation(
+            _persist_generation(
                 db,
                 run_id,
                 primary.provider_name,

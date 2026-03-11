@@ -207,10 +207,12 @@ class UnderwritingRun(Base):
     llm_generations: Mapped[list["LLMGeneration"]] = relationship(
         back_populates="underwriting_run",
         cascade="all, delete-orphan",
+        order_by="LLMGeneration.created_at",
     )
     whatsapp_messages: Mapped[list["WhatsAppMessage"]] = relationship(
         back_populates="underwriting_run",
         cascade="all, delete-orphan",
+        order_by="WhatsAppMessage.created_at",
     )
     offer_acceptance: Mapped["OfferAcceptance | None"] = relationship(
         back_populates="underwriting_run",

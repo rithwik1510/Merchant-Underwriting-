@@ -50,3 +50,9 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def seeded_client(client: TestClient) -> TestClient:
+    client.post("/api/seed/init")
+    return client

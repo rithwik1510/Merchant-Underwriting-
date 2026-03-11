@@ -242,6 +242,16 @@ Copy `.env.local.example` to `.env.local` before starting the frontend.
 Open:
 - [http://localhost:3001](http://localhost:3001)
 
+## Quality Gate
+
+Run the full local verification pass from the project root:
+
+```powershell
+./scripts/quality-gate.ps1
+```
+
+This runs backend tests, frontend lint, and a frontend production build.
+
 ## WhatsApp Test Run
 
 To test the first full message flow:
