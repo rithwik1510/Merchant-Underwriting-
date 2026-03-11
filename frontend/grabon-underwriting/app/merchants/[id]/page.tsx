@@ -52,6 +52,7 @@ export default async function MerchantDetailPage({ params }: Params) {
       <PageHero
         eyebrow={`${category.label} merchant`}
         title={merchant.merchant_name}
+        actions={<RunUnderwritingButton merchantId={merchant.merchant_id} compact />}
         meta={
           <>
             <span className="status-pill border-ink-200 bg-white font-mono text-ink-500">
@@ -207,10 +208,9 @@ export default async function MerchantDetailPage({ params }: Params) {
                     Ready for underwriting
                   </div>
                   <div className="mt-2 text-sm text-ink-800">
-                    Launch the deterministic engine when you are ready to generate a decision packet.
+                    Use the run button in the merchant header to generate the decision packet anytime.
                   </div>
                 </div>
-                <RunUnderwritingButton merchantId={merchant.merchant_id} />
               </div>
             </PanelCard>
           </div>

@@ -12,6 +12,13 @@ def validate_generation_output(payload: dict, output: dict, generation_type: str
     required_keys = {
         "decision_explanation": {"summary", "rationale_sentences", "key_strengths", "key_risks", "cited_metrics"},
         "whatsapp_message": {"message_body", "cta_text", "tone_label"},
+        "sanity_check": {
+            "status",
+            "issue_codes",
+            "notes",
+            "suggested_explanation_focus",
+            "suggested_message_focus",
+        },
     }[generation_type]
 
     missing = required_keys - set(output.keys())
@@ -47,7 +54,7 @@ def validate_generation_output(payload: dict, output: dict, generation_type: str
                 errors.append("Manual review explanations must start with 'We are recommending manual review because'")
             if decision == "rejected" and "we are unable to offer" not in opener:
                 errors.append("Rejected explanations must start with 'We are unable to offer'")
-    else:
+    elif generation_type == "whatsapp_message":
         message_body = output.get("message_body")
         if not isinstance(message_body, str) or not message_body.strip():
             errors.append("WhatsApp output must include message_body text")
@@ -65,6 +72,15 @@ def validate_generation_output(payload: dict, output: dict, generation_type: str
                 errors.append("Approved WhatsApp messages must state that the offer is pre-approved")
             if "dashboard" not in message_body.lower() and payload.get("decision") in {"approved", "manual_review"}:
                 errors.append("WhatsApp messages should direct the merchant back to the dashboard")
+    else:
+        status = output.get("status")
+        if status not in {"passed", "warning"}:
+            errors.append("Sanity check status must be 'passed' or 'warning'")
+        for key in ("issue_codes", "notes", "suggested_explanation_focus", "suggested_message_focus"):
+            if not isinstance(output.get(key), list):
+                errors.append(f"Sanity check field '{key}' must be a list")
+        if isinstance(output.get("notes"), list) and len(output.get("notes", [])) > 4:
+            errors.append("Sanity check notes must stay compact")
 
     return errors
 

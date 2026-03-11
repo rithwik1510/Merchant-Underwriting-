@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from sqlalchemy import select
 
 from app.models import UnderwritingRun
+from app.services.claude_provider import ClaudeProvider
 from app.services.explanation_payload_builder import build_whatsapp_payload
 from app.services.lmstudio_provider import LMStudioProvider
 
@@ -439,3 +440,177 @@ def test_lmstudio_explanation_output_is_normalized_to_offer_because_style() -> N
     assert normalized["rationale_sentences"][0].startswith("We are offering")
     assert "because" in normalized["rationale_sentences"][0].lower()
     assert "GMV has grown 25.95% YoY" in normalized["rationale_sentences"][0]
+
+
+def test_underwriting_persists_ai_sanity_check_when_provider_succeeds(client, monkeypatch) -> None:
+    client.post("/api/seed/init")
+    monkeypatch.setattr(
+        LMStudioProvider,
+        "generate_sanity_check",
+        lambda self, payload: {
+            "status": "passed",
+            "issue_codes": [],
+            "notes": ["Packet is internally consistent and ready for explanation generation."],
+            "suggested_explanation_focus": ["Lead with the approved offer and benchmark-backed demand stability."],
+            "suggested_message_focus": ["Keep WhatsApp copy concise and merchant-facing."],
+        },
+    )
+
+    response = client.post("/api/underwriting/run/m_freshbasket")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"] == "approved"
+    assert body["ai_sanity_check"]["status"] == "passed"
+    assert body["ai_sanity_check"]["provider_name"] == "lmstudio"
+    assert body["ai_sanity_check"]["notes"][0].startswith("Packet is internally consistent")
+
+
+def test_underwriting_preserves_decision_when_ai_sanity_check_is_unavailable(client, monkeypatch) -> None:
+    client.post("/api/seed/init")
+    monkeypatch.setattr(
+        LMStudioProvider,
+        "generate_sanity_check",
+        lambda self, payload: (_ for _ in ()).throw(TimeoutError("timed out")),
+    )
+
+    response = client.post("/api/underwriting/run/m_freshbasket")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"] == "approved"
+    assert body["ai_sanity_check"]["status"] == "unavailable"
+    assert "provider_unavailable" in body["ai_sanity_check"]["issue_codes"]
+
+
+def test_explanation_generation_uses_claude_when_settings_select_claude(client, monkeypatch) -> None:
+    run_id = _create_run(client)
+
+    monkeypatch.setattr(
+        "app.services.explanation_service.get_settings",
+        lambda: SimpleNamespace(llm_provider="claude"),
+    )
+    monkeypatch.setattr(
+        "app.services.claude_provider.get_settings",
+        lambda: SimpleNamespace(
+            claude_api_key="sk-ant-live-key",
+            claude_model="claude-sonnet-4-6",
+            claude_base_url="https://api.anthropic.com/v1",
+        ),
+    )
+    monkeypatch.setattr(
+        ClaudeProvider,
+        "generate_explanation",
+        lambda self, payload: {
+            "summary": "FreshBasket Grocers is approved at Tier 1.",
+            "rationale_sentences": [
+                "We are offering Rs 46.5L at Tier 1 rates because your GMV has grown 29.8% YoY, your customer return rate of 78% indicates demand stability, and your refund rate of 1.8% is below the category average of 2.8%.",
+                "Your recent volume trend supports the finalized offer sizing.",
+                "Benchmark comparisons reinforce the low-risk approval posture.",
+                "These signals support the approved decision and linked insurance terms.",
+            ],
+            "key_strengths": ["Stable GMV trend"],
+            "key_risks": [],
+            "cited_metrics": [
+                {"label": "GMV growth (12M)", "value": "29.8%"},
+                {"label": "Customer return rate", "value": "78%", "benchmark_value": "70%"},
+                {"label": "Refund / return rate", "value": "1.8%", "benchmark_value": "2.8%"},
+            ],
+        },
+    )
+
+    response = client.post(f"/api/underwriting/runs/{run_id}/explanation")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "success"
+    assert body["provider_name"] == "claude"
+    assert body["model_name"] == "claude-sonnet-4-6"
+
+
+def test_whatsapp_generation_uses_claude_when_settings_select_claude(client, monkeypatch) -> None:
+    run_id = _create_run(client)
+
+    monkeypatch.setattr(
+        "app.services.explanation_service.get_settings",
+        lambda: SimpleNamespace(llm_provider="claude"),
+    )
+    monkeypatch.setattr(
+        "app.services.claude_provider.get_settings",
+        lambda: SimpleNamespace(
+            claude_api_key="sk-ant-live-key",
+            claude_model="claude-sonnet-4-6",
+            claude_base_url="https://api.anthropic.com/v1",
+        ),
+    )
+    monkeypatch.setattr(
+        ClaudeProvider,
+        "generate_whatsapp_message",
+        lambda self, payload: {
+            "message_body": (
+                "GrabOn update for FreshBasket Grocers: your pre-approved GrabCredit offer is ready. "
+                "You are eligible for working capital up to Rs 46.5L at 14%-16%. "
+                "This reflects 29.8% year-over-year GMV growth on GrabOn. "
+                "Please review and accept the offer in your merchant dashboard."
+            ),
+            "cta_text": "Review offer",
+            "tone_label": "business_notification",
+        },
+    )
+
+    response = client.post(
+        f"/api/underwriting/runs/{run_id}/whatsapp-draft",
+        json={"message_type": "credit_offer"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "success"
+    assert body["provider_name"] == "claude"
+    assert body["model_name"] == "claude-sonnet-4-6"
+
+
+def test_explanation_generation_receives_ai_sanity_check_hints(client, monkeypatch) -> None:
+    captured = {}
+
+    client.post("/api/seed/init")
+    monkeypatch.setattr(
+        LMStudioProvider,
+        "generate_sanity_check",
+        lambda self, payload: {
+            "status": "warning",
+            "issue_codes": ["missing_benchmark_emphasis"],
+            "notes": ["Call out the category benchmark comparison more directly."],
+            "suggested_explanation_focus": ["Mention the refund benchmark comparison in the main rationale."],
+            "suggested_message_focus": ["Keep the supporting sentence tied to benchmark context."],
+        },
+    )
+
+    run_id = client.post("/api/underwriting/run/m_freshbasket").json()["run_id"]
+
+    def fake_generate_explanation(self, payload):
+        captured["payload"] = payload
+        return {
+            "summary": "FreshBasket Grocers is approved at Tier 1.",
+            "rationale_sentences": [
+                "We are offering credit up to Rs 46.5L and insurance coverage up to Rs 49.5L because the finalized underwriting signals support this offer.",
+                "Your GMV has grown 29.8% over the last 12 months, which shows sustained business momentum.",
+                "Your customer return rate of 78% is above the category benchmark of 70%, which indicates repeat demand stability.",
+                "Your refund rate of 1.8% is below the category benchmark of 2.8%, which supports the approved risk posture.",
+            ],
+            "key_strengths": ["Stable GMV trend", "Low refund pressure"],
+            "key_risks": [],
+            "cited_metrics": [
+                {"label": "GMV growth (12M)", "value": "29.8%", "comparison_text": "year-over-year GMV trend"},
+                {"label": "Customer return rate", "value": "78%", "benchmark_value": "70%"},
+                {"label": "Refund / return rate", "value": "1.8%", "benchmark_value": "2.8%"},
+            ],
+        }
+
+    monkeypatch.setattr(LMStudioProvider, "generate_explanation", fake_generate_explanation)
+
+    response = client.post(f"/api/underwriting/runs/{run_id}/explanation")
+
+    assert response.status_code == 200
+    assert captured["payload"]["sanity_check"]["status"] == "warning"
+    assert "refund benchmark comparison" in captured["payload"]["sanity_check"]["suggested_explanation_focus"][0].lower()

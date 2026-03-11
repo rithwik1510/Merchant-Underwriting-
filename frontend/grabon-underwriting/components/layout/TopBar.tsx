@@ -37,31 +37,27 @@ export function TopBar({ crumbs }: { crumbs?: Crumb[] }) {
   }
 
   const displayCrumbs = crumbs ?? generateCrumbs(pathname);
-  const current = displayCrumbs[displayCrumbs.length - 1]?.label ?? "Dashboard";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ink-100 bg-surface-card px-6 py-4">
+    <header className="sticky top-0 z-30 border-b border-ink-100 bg-surface-card px-6 py-3">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-1">
-          <nav className="flex flex-wrap items-center gap-1.5 text-sm">
-            {displayCrumbs.map((crumb, i) => (
-              <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
-                {i > 0 ? <ChevronRight className="h-3.5 w-3.5 text-ink-300" /> : null}
-                {crumb.href && i < displayCrumbs.length - 1 ? (
-                  <Link
-                    href={crumb.href}
-                    className="font-medium text-ink-400 transition-colors hover:text-go-700"
-                  >
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <span className="font-semibold text-ink-700">{crumb.label}</span>
-                )}
-              </span>
-            ))}
-          </nav>
-          <div className="text-lg font-semibold tracking-tight text-ink-900">{current}</div>
-        </div>
+        <nav className="flex min-h-[24px] flex-wrap items-center gap-1.5 text-sm">
+          {displayCrumbs.map((crumb, i) => (
+            <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
+              {i > 0 ? <ChevronRight className="h-3.5 w-3.5 text-ink-300" /> : null}
+              {crumb.href && i < displayCrumbs.length - 1 ? (
+                <Link
+                  href={crumb.href}
+                  className="font-medium text-ink-400 transition-colors hover:text-go-700"
+                >
+                  {crumb.label}
+                </Link>
+              ) : (
+                <span className="font-semibold text-ink-700">{crumb.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="status-pill border-go-200 bg-go-50 text-go-700">

@@ -83,6 +83,7 @@ export default async function RunDetailPage({ params }: Params) {
         />
         <CommunicationWorkspace
           runId={run.run_id}
+          sanityCheck={run.ai_sanity_check}
           initialExplanation={comms?.latest_explanation ?? null}
           initialDraft={comms?.latest_whatsapp_draft ?? null}
           initialMessages={comms?.whatsapp_messages ?? []}

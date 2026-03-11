@@ -1,18 +1,16 @@
 # GrabOn Merchant Underwriting Console
 
-An end-to-end merchant underwriting product for the GrabOn assessment, built as a phased system rather than a one-shot demo. The project starts with merchant and benchmark truth, turns that data into deterministic credit and insurance decisions, uses a local model to narrate those decisions safely, delivers outbound WhatsApp offers, and carries the merchant all the way into a realistic mock NACH mandate flow through a frontend operator console.
+An end-to-end merchant underwriting product for the GrabOn assessment, built as a phased system rather than a one-shot demo. The system turns merchant and benchmark data into deterministic credit and insurance decisions, uses the active AI provider to explain those decisions safely, delivers outbound WhatsApp offers, and carries the merchant into a realistic mock NACH mandate flow through an operator console.
 
-The goal was not to build “an AI app that guesses loans.” The goal was to build something that feels like a real internal product a company could evolve: auditable, explainable, and operationally believable.
+The goal was not to build "an AI app that guesses loans." The goal was to build something that feels like a real internal product a company could evolve: auditable, explainable, and operationally believable.
 
 ## Product
 
-This project was intentionally built in layers.
-
-It began with a simple question: if GrabOn launches merchant finance products like `GrabCredit` and `GrabInsurance`, what would a credible underwriting workflow actually look like? From there, the system was shaped around one principle:
+This project was built in layers around one principle:
 
 `deterministic decisions first, AI narration second`
 
-That led to a product journey with five clear stages:
+That led to a product journey with five stages:
 
 1. merchant and benchmark data become the source of truth
 2. a deterministic underwriting engine computes score, tier, and offers
@@ -20,14 +18,9 @@ That led to a product journey with five clear stages:
 4. WhatsApp becomes the outbound delivery channel
 5. the merchant can accept the offer and move through a mock NACH journey
 
-The result is not just a backend or a dashboard. It is a complete merchant-finance workflow.
-
 ## Phase Journey
 
 ### Phase 1: Foundation and Domain Truth
-The first phase established the system of record.
-
-Implemented:
 - FastAPI backend scaffold
 - SQLAlchemy models and Alembic migrations
 - seed data for 10 named merchants
@@ -38,35 +31,27 @@ Implemented:
 Why it mattered:
 - underwriting logic is only as good as the data model beneath it
 - the seeded merchants are part of the product story, not fake test data
-- policy versioning had to exist before scoring logic so thresholds would not get hardcoded everywhere
+- policy versioning prevents thresholds from being hardcoded everywhere
 
 ### Phase 2: Deterministic Underwriting Core
-This phase built the real decision engine.
-
-Implemented:
 - feature engineering from merchant history
 - benchmark-aware comparisons
 - hard-stop rejection rules
 - manual-review rules
 - weighted deterministic scorecard
 - tier mapping
-- post-adjustment tier synchronization for offer pricing (offers now use the final tier after review/capping logic)
-- credit offer generation
-- insurance offer generation
+- synchronized final-tier pricing for credit and insurance offers
 - persistent underwriting runs with stored reasons and artifacts
 
 Why it mattered:
 - the system needed to produce explainable decisions without depending on prompts
 - the underwriting engine had to be reproducible, testable, and auditable
-- once this phase existed, the project stopped being a data viewer and became an actual financial decision system
 
 ### Phase 3: Explanation and Communication Layer
-This phase added controlled AI and outbound communications.
-
-Implemented:
 - LM Studio integration through an OpenAI-compatible API
 - Claude integration through the Anthropic API
 - backend-backed provider settings with runtime switching between LM Studio and Claude
+- lightweight AI sanity check on underwriting runs using the active provider from Settings
 - constrained prompt payloads built from stored underwriting artifacts only
 - output validation to block unsupported claims and invented numbers
 - deterministic fallback templates
@@ -76,48 +61,30 @@ Implemented:
 
 Why it mattered:
 - the brief required explainability, not just a numeric score
-- AI was used to improve readability and communication, not to decide limits or tiers
-- the product began to feel like a real ops workflow once it could draft and send merchant offers
+- AI improves readability and communication, not financial truth
 
 ### Phase 4: Offer Acceptance and Mock NACH Flow
-This phase added the post-offer journey.
-
-Implemented:
 - offer acceptance persistence
 - product-type aware acceptance rules
 - mock NACH mandate session
-- bank selection with masked data
-- OTP generation and verification
+- bank selection, OTP generation and verification
 - UMRN and mandate reference generation
 - state-machine validation for mandate progression
 
 Why it mattered:
-- a real embedded-finance experience does not stop at underwriting
 - the project needed to show what happens after the merchant says yes
-- this phase made the journey operationally complete
 
 ### Phase 5: Frontend Operator Console
-The final major phase turned the backend workflow into a product experience.
-
-Implemented:
 - Next.js 14 frontend with TypeScript
-- white/blue/red operator-console redesign
-- dark-first theme with light toggle and persisted preference
 - merchant portfolio home screen
 - merchant detail view with history and benchmarks
-- run ledger
-- unified run workspace that keeps decision, offers, communication, acceptance, and mandate in one guided page
-- communication workspace with credit / insurance / combined selection, AI summary, WhatsApp draft, and direct send action
-- condensed decision-insight block with deeper breakdown hidden behind expansion
-- offer summary moved behind an optional collapsible section so the main workflow stays lighter
-- compact microcopy pass across shell and run flow to reduce clutter
+- run ledger and run workspace
+- communication workspace with AI summary, WhatsApp draft, and direct send action
 - acceptance and mandate views
+- progressive-disclosure UI polish to reduce clutter
 
 Why it mattered:
-- the backend was already real, so the frontend had to surface that reality cleanly
-- the UI was redesigned to reduce clutter on first glance and reveal detail progressively
-- the post-underwriting flow was simplified so operators do not have to jump between multiple pages just to explain and send one merchant offer
-- the project became demo-ready only once the complete flow could be driven visually
+- the backend was already real, so the frontend had to surface that reality clearly
 
 ## Current Product Scope
 
@@ -127,7 +94,8 @@ Today, the project covers the full core journey:
 - inspect merchant history and benchmark posture
 - run deterministic underwriting
 - inspect score, tier, reasons, and offers
-- generate explanation content with LM Studio
+- generate explanation content with the active provider
+- run a lightweight AI sanity check against the deterministic packet
 - generate and send WhatsApp drafts through Twilio sandbox
 - inspect communication history
 - accept an offer
@@ -154,43 +122,14 @@ Today, the project covers the full core journey:
 ### AI Design Principle
 - underwriting decisions are deterministic
 - AI never sets score, tier, limit, premium, or approval state
-- AI only explains finalized decisions and drafts communication
-- if the local model fails, deterministic templates take over
-
-### UX Design Principle
-- the UI follows progressive disclosure
-- the first screen stays simple and calm
-- deeper operational detail appears only when the user chooses to inspect, communicate, accept, or complete mandate steps
-
-## How the App Works
-
-1. Merchant history and category benchmarks are loaded as source-of-truth inputs.
-2. The underwriting engine computes features from those inputs.
-3. Policy rules apply hard stops and manual-review logic.
-4. A weighted scorecard assigns the merchant a decision and tier.
-5. Credit and insurance offers are generated from deterministic formulas.
-6. The run is stored with snapshots, reasons, and offer artifacts.
-7. The explanation layer uses the active configured provider, either LM Studio or Claude, to narrate the stored decision safely.
-8. The communication layer drafts and sends an outbound WhatsApp message.
-9. The merchant can accept the offer.
-10. The mandate layer simulates bank selection, OTP verification, and UMRN completion.
-
-## Seed Merchants
-
-The project uses 10 named merchants so the demo feels coherent and not synthetic. Examples include:
-
-- `FreshBasket Grocers` for a strong Tier 1 path
-- `QuickByte Electronics` for a refund-driven rejection
-- `GlowUp Beauty` for a manual-review path
-- `WanderDeals Travel` for sparse-history rejection
-- `TripTrail Holidays` for reduced-confidence seasonal behavior
-
-These merchants were designed so evaluators can inspect a profile and understand why the outcome makes sense.
+- the active provider can perform a lightweight sanity check on the deterministic packet
+- AI explains finalized decisions and drafts communication using deterministic facts
+- if the active provider fails, deterministic templates take over safely
 
 ## Local Setup
 
 ### Backend
-From [backend](C:\Users\posan\OneDrive\Desktop\Grab%20On%20project\backend):
+From `backend`:
 
 ```bash
 pip install -r requirements.txt
@@ -198,9 +137,7 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
-The backend uses a local `.env` file. Start by copying `.env.example` to `.env` and then fill in your local values.
-
-Required local values:
+Copy `.env.example` to `.env`, then fill in local values:
 
 ```env
 DATABASE_URL=sqlite:///./grabon.db
@@ -222,14 +159,14 @@ TWILIO_CONTENT_SID=
 TWILIO_CONTENT_VARIABLES_JSON=
 ```
 
-Then seed the project:
+Seed the project:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/seed/init
 ```
 
 ### Frontend
-From [frontend/grabOn-underwriting](C:\Users\posan\OneDrive\Desktop\Grab%20On%20project\frontend\grabOn-underwriting):
+From `frontend/grabon-underwriting`:
 
 ```bash
 npm install
@@ -248,9 +185,9 @@ Open:
 - [http://localhost:3001](http://localhost:3001)
 - [http://localhost:3001/settings](http://localhost:3001/settings)
 
-## LLM Provider Settings
+If a stale dev session ever hides UI updates, restart the frontend cleanly or run the production server on a fresh port. The canonical development flow remains `3001`.
 
-The app now has a dedicated Settings page for model-provider control instead of keeping Claude controls inside the communication workspace.
+## LLM Provider Settings
 
 Use [http://localhost:3001/settings](http://localhost:3001/settings) to:
 
@@ -290,34 +227,31 @@ curl -X POST http://127.0.0.1:8000/api/llm/probe \
   -d "{\"provider\":\"claude\"}"
 ```
 
-For Claude, an `api_key_override` can be supplied in the probe request for one-off validation only; it is never persisted.
-
-You can also manage the provider graphically through the Settings page and then click `Probe active provider`.
+For Claude, an `api_key_override` can be supplied in the probe request for one-off validation only; it is never persisted. A fake or expired Claude key should return `unauthorized`, not a server error.
 
 ## WhatsApp Test Run
 
 To test the first full message flow:
 
-1. Start LM Studio and run the local server at `http://127.0.0.1:1234`, or configure Claude in Settings
+1. Start LM Studio at `http://127.0.0.1:1234`, or configure Claude in Settings
 2. Make sure your WhatsApp number has joined the Twilio sandbox
 3. Start backend and frontend
-4. Open the UI and choose an approved merchant such as `FreshBasket Grocers`
+4. Choose an approved merchant such as `FreshBasket Grocers`
 5. Run underwriting
-6. Open the communication page
-7. Generate the AI explanation
-8. Generate the WhatsApp draft
-9. Enter a recipient in Twilio format:
+6. Generate the AI explanation
+7. Generate the WhatsApp draft
+8. Enter a recipient in Twilio format:
 
 ```text
 whatsapp:+91XXXXXXXXXX
 ```
 
-10. Click `Send`
+9. Click `Send`
 
 Expected behavior:
 - the explanation and draft are generated by the currently active provider
 - if the active provider fails or violates the output contract, deterministic fallback still produces a safe result
-- Twilio accepts the message and returns a queued/sent state
+- Twilio accepts the message and returns a queued or sent state
 - communication history stores the outbound record
 
 ## Important API Endpoints
@@ -362,18 +296,17 @@ Expected behavior:
 - The underwriting core is deterministic because financial decisions need repeatability.
 - The AI layer is constrained because readability should improve trust, not replace logic.
 - The seeded merchant dataset is treated as a product asset because the demo depends on narrative coherence.
-- The frontend is intentionally minimal at first glance and deeper on inspection, matching how real operator tools work.
+- The frontend is intentionally minimal at first glance and deeper on inspection.
 - The mandate workflow is mocked realistically enough to demonstrate product thinking without pretending to be a live bank integration.
 
 ## With More Time
 
-If this were extended further, the next upgrades would be:
+The next improvements would be:
 
 - richer operator analytics and filters
 - stronger communication controls and retry tooling
 - better model-side formatting and currency normalization
 - screenshot assets in this README
-- Loom-ready walkthrough notes embedded into the repo
 - production-style auth, roles, and audit exports
 
 ## Final Note

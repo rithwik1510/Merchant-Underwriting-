@@ -67,6 +67,7 @@ def _load_run(db: Session, run_id: int) -> UnderwritingRun:
             selectinload(UnderwritingRun.credit_offer),
             selectinload(UnderwritingRun.insurance_offer),
             selectinload(UnderwritingRun.decision_reasons),
+            selectinload(UnderwritingRun.ai_sanity_check),
             selectinload(UnderwritingRun.llm_generations),
             selectinload(UnderwritingRun.whatsapp_messages),
         )

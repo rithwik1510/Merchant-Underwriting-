@@ -10,6 +10,9 @@ def build_explanation_payload(run: UnderwritingRun) -> dict:
     for reason in run.decision_reasons:
         if reason.reason_type.value in {"hard_stop", "manual_review", "score_component"}:
             reason_facts.append(reason.reason_detail)
+    sanity_check = getattr(run, "ai_sanity_check", None)
+    sanity_explanation_focus = sanity_check.suggested_explanation_focus_json if sanity_check else []
+    sanity_notes = sanity_check.notes_json if sanity_check else []
 
     category_refund_rate = None
     if run.feature_snapshot.refund_delta_vs_category is not None:
@@ -67,6 +70,12 @@ def build_explanation_payload(run: UnderwritingRun) -> dict:
         },
         "key_facts": reason_facts[:6],
         "cited_metrics": cited_metrics,
+        "sanity_check": {
+            "status": sanity_check.status.value if sanity_check else None,
+            "provider_name": sanity_check.provider_name if sanity_check else None,
+            "notes": sanity_notes[:3],
+            "suggested_explanation_focus": sanity_explanation_focus[:3],
+        },
         "allowed_numeric_tokens": sorted(numeric_tokens),
         "mode": "operator_explanation",
     }
@@ -81,6 +90,7 @@ def build_whatsapp_payload(run: UnderwritingRun, message_type: str) -> dict:
     if run.feature_snapshot.return_rate_delta_vs_category is not None:
         category_return_rate = Decimal(run.merchant.customer_return_rate) - Decimal(run.feature_snapshot.return_rate_delta_vs_category)
 
+    sanity_check = getattr(run, "ai_sanity_check", None)
     payload = {
         "merchant_name": run.merchant.merchant_name,
         "decision": run.decision.value,
@@ -104,6 +114,12 @@ def build_whatsapp_payload(run: UnderwritingRun, message_type: str) -> dict:
             positive_when="lower",
         ),
         "avg_monthly_gmv_3m": _money_short(run.feature_snapshot.avg_monthly_gmv_3m),
+        "sanity_check": {
+            "status": sanity_check.status.value if sanity_check else None,
+            "provider_name": sanity_check.provider_name if sanity_check else None,
+            "notes": sanity_check.notes_json[:2] if sanity_check else [],
+            "suggested_message_focus": sanity_check.suggested_message_focus_json[:3] if sanity_check else [],
+        },
     }
     if message_type == "credit_offer":
         payload.update(

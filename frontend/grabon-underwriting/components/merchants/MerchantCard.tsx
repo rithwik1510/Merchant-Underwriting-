@@ -16,6 +16,12 @@ interface MerchantCardProps {
 
 export function MerchantCard({ merchant, index }: MerchantCardProps) {
   const cat = getCategoryConfig(merchant.category);
+  const snapshotTone =
+    merchant.latest_decision === "rejected" || merchant.seed_intended_outcome === "rejected"
+      ? "text-risk-700"
+      : merchant.latest_decision === "manual_review" || merchant.seed_intended_outcome === "manual_review"
+        ? "text-violet-700"
+        : "text-ink-800";
   const latestStatus =
     merchant.latest_decision && merchant.latest_risk_tier
       ? `${merchant.latest_decision.replace(/_/g, " ")} | ${merchant.latest_risk_tier.replace(/_/g, " ")}`
@@ -30,8 +36,7 @@ export function MerchantCard({ merchant, index }: MerchantCardProps) {
     >
       <Link href={`/merchants/${merchant.merchant_id}`} className="group block">
         <div
-          className="rounded-3xl border border-ink-100 bg-white p-5 shadow-card transition-all duration-200 group-hover:border-go-200 group-hover:shadow-card-hover"
-          style={{ borderLeft: `3px solid ${cat.color}` }}
+          className="rounded-3xl border border-ink-100 bg-white p-5 shadow-card transition-all duration-200 group-hover:border-ink-200 group-hover:shadow-card-hover"
         >
           <div className="mb-4 flex items-start gap-3">
             <div
@@ -79,7 +84,7 @@ export function MerchantCard({ merchant, index }: MerchantCardProps) {
 
           <div className="mt-3 rounded-2xl border border-ink-100 bg-white px-3.5 py-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">Latest snapshot</div>
-            <div className="mt-1 text-sm font-semibold text-ink-800">{latestStatus}</div>
+            <div className={`mt-1 text-sm font-semibold ${snapshotTone}`}>{latestStatus}</div>
             {merchant.latest_run_id ? (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-ink-500">
                 <span>Credit {formatCurrency(merchant.latest_credit_limit)}</span>

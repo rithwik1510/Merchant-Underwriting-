@@ -20,8 +20,13 @@ export function DecisionHeader({ run }: { run: UnderwritingRun }) {
       className="hero-surface p-6 md:p-7"
     >
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center">
-        <div className="rounded-[28px] border border-go-200 bg-white p-4 shadow-card">
-          <ScoreGauge score={run.numeric_score} size={190} />
+        <div className="flex w-[236px] shrink-0 flex-col overflow-hidden rounded-[28px] border border-go-200 bg-white shadow-card">
+          <div className="flex items-center justify-center px-4 py-5">
+            <ScoreGauge score={run.numeric_score} size={164} />
+          </div>
+          <div className="border-t border-ink-100 bg-surface-50 px-4 py-3 text-center font-sans text-[11px] font-medium tracking-[0.24em] text-ink-500">
+            POLICY SCORE
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">

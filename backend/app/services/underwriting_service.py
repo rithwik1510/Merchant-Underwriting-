@@ -22,6 +22,7 @@ from app.models import (
     UnderwritingRunStatus,
 )
 from app.schemas import (
+    AISanityCheckResponse,
     CreditOfferResponse,
     DecisionReasonResponse,
     FeatureSnapshotResponse,
@@ -30,6 +31,7 @@ from app.schemas import (
     UnderwritingRunListResponse,
     UnderwritingRunResponse,
 )
+from app.services.ai_sanity_service import create_ai_sanity_check
 from app.services.feature_engine import compute_features
 from app.services.offer_engine import build_credit_offer, build_insurance_offer
 from app.services.policy_engine import evaluate_hard_stops, evaluate_manual_review
@@ -181,6 +183,20 @@ def run_underwriting_for_merchant(db: Session, merchant_public_id: str) -> Under
             offer_status=OfferStatus(insurance_offer_result.offer_status),
         )
     )
+    db.flush()
+    run_with_artifacts = db.scalar(
+        select(UnderwritingRun)
+        .options(
+            selectinload(UnderwritingRun.merchant),
+            selectinload(UnderwritingRun.merchant).selectinload(Merchant.monthly_metrics),
+            selectinload(UnderwritingRun.feature_snapshot),
+            selectinload(UnderwritingRun.decision_reasons),
+            selectinload(UnderwritingRun.credit_offer),
+            selectinload(UnderwritingRun.insurance_offer),
+        )
+        .where(UnderwritingRun.id == run.id)
+    )
+    db.add(create_ai_sanity_check(run_with_artifacts))
     db.commit()
     return get_underwriting_run(db, run.id)
 
@@ -216,6 +232,7 @@ def get_underwriting_run(db: Session, run_id: int) -> UnderwritingRunResponse:
             selectinload(UnderwritingRun.credit_offer),
             selectinload(UnderwritingRun.insurance_offer),
             selectinload(UnderwritingRun.policy_version),
+            selectinload(UnderwritingRun.ai_sanity_check),
         )
         .where(UnderwritingRun.id == run_id)
     )
@@ -294,6 +311,21 @@ def get_underwriting_run(db: Session, run_id: int) -> UnderwritingRunResponse:
             premium_amount=float(run.insurance_offer.premium_amount) if run.insurance_offer.premium_amount is not None else None,
             policy_type=run.insurance_offer.policy_type,
             offer_status=run.insurance_offer.offer_status.value,
+        ),
+        ai_sanity_check=(
+            AISanityCheckResponse(
+                provider_name=run.ai_sanity_check.provider_name,
+                model_name=run.ai_sanity_check.model_name,
+                status=run.ai_sanity_check.status.value,
+                issue_codes=run.ai_sanity_check.issue_codes_json,
+                notes=run.ai_sanity_check.notes_json,
+                suggested_explanation_focus=run.ai_sanity_check.suggested_explanation_focus_json,
+                suggested_message_focus=run.ai_sanity_check.suggested_message_focus_json,
+                validation_errors_json=run.ai_sanity_check.validation_errors_json,
+                created_at=run.ai_sanity_check.created_at,
+            )
+            if run.ai_sanity_check
+            else None
         ),
         created_at=run.created_at,
     )

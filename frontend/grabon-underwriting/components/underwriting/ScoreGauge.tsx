@@ -44,8 +44,6 @@ export function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
   const gradientId = `score-track-${size}`;
   const valueText = score !== null ? displayScore.toFixed(2) : "-";
   const valueSize = valueText.length >= 5 ? size * 0.27 : size * 0.3;
-  const labelText = score !== null ? "POLICY SCORE" : "PENDING";
-  const labelTop = cy + size * 0.24;
 
   return (
     <div className="relative flex items-center justify-center overflow-hidden" style={{ width: size, height: size }}>
@@ -97,25 +95,18 @@ export function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
 
       </svg>
 
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center pl-[18%]">
         <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono font-extrabold leading-none text-ink-900"
+          className="min-w-[132px] text-center font-mono text-ink-900"
           style={{
             fontSize: valueSize,
             letterSpacing: "-0.06em",
+            fontWeight: 800,
+            lineHeight: 1,
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {valueText}
-        </div>
-        <div
-          className="absolute left-1/2 -translate-x-1/2 text-center font-sans font-medium tracking-[0.18em] text-ink-500"
-          style={{
-            top: labelTop,
-            fontSize: size * 0.08,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {labelText}
         </div>
       </div>
     </div>

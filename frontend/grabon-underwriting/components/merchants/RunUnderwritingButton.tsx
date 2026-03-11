@@ -14,7 +14,13 @@ const STAGES = [
   "Structuring offer outputs...",
 ];
 
-export function RunUnderwritingButton({ merchantId }: { merchantId: string }) {
+export function RunUnderwritingButton({
+  merchantId,
+  compact = false,
+}: {
+  merchantId: string;
+  compact?: boolean;
+}) {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [stageIdx, setStageIdx] = useState(0);
@@ -50,7 +56,11 @@ export function RunUnderwritingButton({ merchantId }: { merchantId: string }) {
         disabled={status === "loading" || status === "success"}
         whileHover={canAnimate ? { scale: 1.01, y: -1 } : undefined}
         whileTap={canAnimate ? { scale: 0.995 } : undefined}
-        className="relative w-full overflow-hidden rounded-[22px] border border-go-300 bg-[linear-gradient(135deg,#0f4ae6,#1d63ff)] px-6 py-4 text-left text-white shadow-glow transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-95"
+        className={
+          compact
+            ? "relative min-w-[220px] overflow-hidden rounded-2xl border border-go-300 bg-[linear-gradient(135deg,#0f4ae6,#1d63ff)] px-5 py-3 text-left text-white shadow-glow transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-95"
+            : "relative w-full overflow-hidden rounded-[22px] border border-go-300 bg-[linear-gradient(135deg,#0f4ae6,#1d63ff)] px-6 py-4 text-left text-white shadow-glow transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-95"
+        }
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.26),transparent_38%)]" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(2,6,23,0.08))]" />
@@ -65,14 +75,22 @@ export function RunUnderwritingButton({ merchantId }: { merchantId: string }) {
               className="relative flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
+                <div
+                  className={
+                    compact
+                      ? "flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/10"
+                      : "flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10"
+                  }
+                >
                   <Radar className="h-4 w-4" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold">Run underwriting engine</div>
-                  <div className="mt-1 text-xs text-white/78">
-                    Produce decision tier, score, reasons, and offer outputs
-                  </div>
+                  {!compact ? (
+                    <div className="mt-1 text-xs text-white/78">
+                      Produce decision tier, score, reasons, and offer outputs
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 shrink-0" />
@@ -129,7 +147,11 @@ export function RunUnderwritingButton({ merchantId }: { merchantId: string }) {
         </AnimatePresence>
       </motion.button>
 
-      {error ? <p className="text-center text-xs text-risk-600">{error}</p> : null}
+      {error ? (
+        <p className={compact ? "text-left text-xs text-risk-600" : "text-center text-xs text-risk-600"}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

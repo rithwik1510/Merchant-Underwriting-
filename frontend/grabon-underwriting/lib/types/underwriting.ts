@@ -61,6 +61,18 @@ export interface InsuranceOffer {
   offer_status: string;
 }
 
+export interface AISanityCheck {
+  provider_name: string;
+  model_name: string;
+  status: "passed" | "warning" | "unavailable" | "skipped";
+  issue_codes: string[];
+  notes: string[];
+  suggested_explanation_focus: string[];
+  suggested_message_focus: string[];
+  validation_errors_json: string[] | null;
+  created_at: string;
+}
+
 export interface UnderwritingRun {
   run_id: number;
   merchant: MerchantSummary;
@@ -79,6 +91,7 @@ export interface UnderwritingRun {
   offer_adjustments: DecisionReason[];
   credit_offer: CreditOffer | null;
   insurance_offer: InsuranceOffer | null;
+  ai_sanity_check: AISanityCheck | null;
   created_at: string;
 }
 

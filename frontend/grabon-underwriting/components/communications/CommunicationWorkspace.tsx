@@ -6,6 +6,7 @@ import { BrainCircuit, CheckCircle2, Loader2, MessageSquareText, RefreshCw, Send
 import { ApiError } from "@/lib/api/client";
 import { generateExplanation, generateWhatsAppDraft, sendWhatsApp } from "@/lib/api/communications";
 import { ExplanationContent, WhatsAppMessage } from "@/lib/types/communications";
+import { AISanityCheck } from "@/lib/types/underwriting";
 import { cn } from "@/lib/utils";
 import { formatDate, formatRelativeTime } from "@/lib/utils/formatters";
 
@@ -13,6 +14,7 @@ type MessageType = "credit_offer" | "insurance_offer" | "combined_offer";
 
 interface CommunicationWorkspaceProps {
   runId: number;
+  sanityCheck?: AISanityCheck | null;
   defaultRecipientPhone?: string | null;
   initialExplanation?: ExplanationContent | null;
   initialDraft?: ExplanationContent | null;
@@ -62,6 +64,7 @@ function normalizeWhatsAppPhone(value: string) {
 
 export function CommunicationWorkspace({
   runId,
+  sanityCheck = null,
   defaultRecipientPhone,
   initialExplanation = null,
   initialDraft = null,
@@ -204,6 +207,39 @@ export function CommunicationWorkspace({
               <div className="text-sm font-semibold text-ink-900">{MESSAGE_OPTIONS[2].label}</div>
               <div className="mt-0.5 text-xs text-ink-500">{MESSAGE_OPTIONS[2].description}</div>
             </button>
+
+            {sanityCheck ? (
+              <div
+                className={cn(
+                  "flex flex-wrap items-start justify-between gap-3 rounded-2xl border px-4 py-3",
+                  sanityCheck.status === "passed"
+                    ? "border-go-200 bg-go-50"
+                    : sanityCheck.status === "warning"
+                      ? "border-risk-200 bg-risk-50"
+                      : "border-ink-100 bg-surface-50"
+                )}
+              >
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-ink-900">AI sanity check</span>
+                    <span className="status-pill border-white/70 bg-white/80 text-ink-600">
+                      {sanityCheck.status.replace(/_/g, " ")}
+                    </span>
+                    <span className="status-pill border-white/70 bg-white/80 text-ink-500">
+                      {sanityCheck.provider_name}
+                    </span>
+                  </div>
+                  <p className="text-sm text-ink-600">
+                    {sanityCheck.notes[0] || "Deterministic packet reviewed for clarity and consistency."}
+                  </p>
+                </div>
+                {sanityCheck.issue_codes.length ? (
+                  <span className="status-pill border-white/70 bg-white/80 font-mono text-ink-500">
+                    {sanityCheck.issue_codes[0].replace(/_/g, " ")}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 

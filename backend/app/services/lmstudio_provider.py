@@ -32,10 +32,26 @@ class LMStudioProvider:
                 "At least two of the remaining sentences must reference exact merchant metrics. "
                 "When benchmark data exists, explicitly compare the merchant metric to the category benchmark using the exact comparison_text phrases supplied in the payload cited_metrics. "
                 "Do not infer whether a metric is above or below benchmark on your own. "
-                "Do not use vague filler such as 'strong profile' without citing the supporting metric."
+                "Do not use vague filler such as 'strong profile' without citing the supporting metric. "
+                "If payload.sanity_check is present, use its notes and suggested_explanation_focus to improve emphasis and completeness, but never add new facts."
             ),
         )
         return self._normalize_explanation_output(payload, output)
+
+    def generate_sanity_check(self, payload: dict) -> dict:
+        output = self._generate(
+            payload,
+            (
+                "Return strict JSON with keys: status, issue_codes, notes, "
+                "suggested_explanation_focus, suggested_message_focus. "
+                "status must be either 'passed' or 'warning'. "
+                "This is a QA-style sanity check, not a second underwriting decision. "
+                "Do not recommend new prices, new tiers, or policy overrides. "
+                "Only flag inconsistencies, missing benchmark context, weak explanation emphasis, "
+                "or merchant-facing messaging issues."
+            ),
+        )
+        return self._normalize_sanity_output(output)
 
     def generate_whatsapp_message(self, payload: dict) -> dict:
         output = self._generate(
@@ -49,7 +65,8 @@ class LMStudioProvider:
             "If you reference category comparison, copy the exact comparison_text supplied in the payload instead of inventing your own above/below phrasing. "
             "Do not mention internal labels such as risk tier, underwriting tier, score, policy engine, validation, or templates. "
             "Do not use markdown, bullets, emojis, or placeholders. "
-            "Use only the formatted monetary values, percentages, benchmark comparisons, and tenure strings present in the payload.",
+            "Use only the formatted monetary values, percentages, benchmark comparisons, and tenure strings present in the payload. "
+            "If payload.sanity_check is present, use its notes and suggested_message_focus only to improve clarity or emphasis, not to add new facts.",
         )
         return self._normalize_whatsapp_output(payload, output)
 
@@ -177,6 +194,23 @@ class LMStudioProvider:
 
         output["rationale_sentences"] = rationale
         return output
+
+    @staticmethod
+    def _normalize_sanity_output(output: dict) -> dict:
+        status = str(output.get("status") or "passed").strip().lower()
+        if status not in {"passed", "warning"}:
+            status = "warning"
+        return {
+            "status": status,
+            "issue_codes": [str(value) for value in output.get("issue_codes", []) if str(value).strip()],
+            "notes": [str(value) for value in output.get("notes", []) if str(value).strip()],
+            "suggested_explanation_focus": [
+                str(value) for value in output.get("suggested_explanation_focus", []) if str(value).strip()
+            ],
+            "suggested_message_focus": [
+                str(value) for value in output.get("suggested_message_focus", []) if str(value).strip()
+            ],
+        }
 
     @staticmethod
     def _money_short_text(value: str) -> str:

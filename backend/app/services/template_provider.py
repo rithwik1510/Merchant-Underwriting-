@@ -5,6 +5,15 @@ class TemplateProvider:
     provider_name = "template_fallback"
     model_name = "deterministic_templates"
 
+    def generate_sanity_check(self, payload: dict) -> dict:
+        return {
+            "status": "passed",
+            "issue_codes": [],
+            "notes": ["Deterministic packet is available for explanation and communication."],
+            "suggested_explanation_focus": ["Lead with the deterministic offer and strongest benchmark-backed metrics."],
+            "suggested_message_focus": ["Keep the merchant-facing message concise and grounded in approved offer terms."],
+        }
+
     def generate_explanation(self, payload: dict) -> dict:
         facts = payload["key_facts"][:2]
         merchant_name = payload["merchant_name"]

@@ -129,6 +129,13 @@ class LLMGenerationStatus(str, Enum):
     FAILED_PROVIDER = "failed_provider"
 
 
+class AISanityCheckStatus(str, Enum):
+    PASSED = "passed"
+    WARNING = "warning"
+    UNAVAILABLE = "unavailable"
+    SKIPPED = "skipped"
+
+
 class WhatsAppMessageType(str, Enum):
     CREDIT_OFFER = "credit_offer"
     INSURANCE_OFFER = "insurance_offer"
@@ -209,6 +216,11 @@ class UnderwritingRun(Base):
         back_populates="underwriting_run",
         cascade="all, delete-orphan",
         order_by="LLMGeneration.created_at",
+    )
+    ai_sanity_check: Mapped["AISanityCheck | None"] = relationship(
+        back_populates="underwriting_run",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
     whatsapp_messages: Mapped[list["WhatsAppMessage"]] = relationship(
         back_populates="underwriting_run",
@@ -329,6 +341,30 @@ class LLMGeneration(Base):
 
     underwriting_run: Mapped[UnderwritingRun] = relationship(back_populates="llm_generations")
     whatsapp_messages: Mapped[list["WhatsAppMessage"]] = relationship(back_populates="llm_generation")
+
+
+class AISanityCheck(Base):
+    __tablename__ = "ai_sanity_checks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    underwriting_run_id: Mapped[int] = mapped_column(
+        ForeignKey("underwriting_runs.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    provider_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    model_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[AISanityCheckStatus] = mapped_column(
+        SqlEnum(AISanityCheckStatus, native_enum=False), nullable=False
+    )
+    issue_codes_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    notes_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    suggested_explanation_focus_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    suggested_message_focus_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    input_payload_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    output_payload_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    validation_errors_json: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    underwriting_run: Mapped[UnderwritingRun] = relationship(back_populates="ai_sanity_check")
 
 
 class WhatsAppMessage(Base):

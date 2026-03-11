@@ -122,6 +122,18 @@ class InsuranceOfferResponse(BaseModel):
     offer_status: str
 
 
+class AISanityCheckResponse(BaseModel):
+    provider_name: str
+    model_name: str
+    status: str
+    issue_codes: list[str]
+    notes: list[str]
+    suggested_explanation_focus: list[str]
+    suggested_message_focus: list[str]
+    validation_errors_json: list[str] | None
+    created_at: datetime
+
+
 class UnderwritingRunListResponse(BaseModel):
     run_id: int
     merchant_id: str
@@ -151,6 +163,7 @@ class UnderwritingRunResponse(BaseModel):
     offer_adjustments: list[DecisionReasonResponse]
     credit_offer: CreditOfferResponse
     insurance_offer: InsuranceOfferResponse
+    ai_sanity_check: AISanityCheckResponse | None = None
     created_at: datetime
 
 

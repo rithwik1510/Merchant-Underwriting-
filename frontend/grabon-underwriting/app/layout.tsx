@@ -57,7 +57,7 @@ export default function RootLayout({
         <TooltipProvider>
           <div className="flex min-h-screen bg-surface-base">
             <Sidebar />
-            <div className="ml-72 flex min-h-screen flex-1 flex-col">
+            <div className="ml-64 flex min-h-screen flex-1 flex-col">
               <TopBar />
               <main className="flex-1 overflow-y-auto">
                 <PageTransition>{children}</PageTransition>

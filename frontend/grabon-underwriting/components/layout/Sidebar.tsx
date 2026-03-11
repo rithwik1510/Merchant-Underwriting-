@@ -26,8 +26,8 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="nav-surface fixed left-0 top-0 z-40 flex h-screen w-72 flex-col">
-      <div className="border-b border-ink-100 px-6 pb-5 pt-6">
+    <aside className="nav-surface fixed left-0 top-0 z-40 flex h-screen w-64 flex-col">
+      <div className="border-b border-ink-200 px-5 pb-5 pt-6">
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-go-600 text-white shadow-brand">
             <ShieldCheck className="h-6 w-6" />
@@ -51,7 +51,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="flex-1 px-4 py-5">
+      <div className="flex-1 px-3 py-5">
         <div className="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-400">
           Workspace
         </div>
@@ -65,7 +65,7 @@ export function Sidebar() {
                 className={cn(
                   "group flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm font-semibold transition-all duration-200",
                   active
-                    ? "border-go-200 bg-go-50 text-go-700 shadow-card"
+                    ? "border-ink-100 bg-white text-ink-900 shadow-card"
                     : "border-transparent text-ink-500 hover:border-ink-100 hover:bg-white hover:text-ink-800"
                 )}
               >
@@ -73,7 +73,7 @@ export function Sidebar() {
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-xl border transition-colors",
                     active
-                      ? "border-go-200 bg-white text-go-700"
+                      ? "border-ink-100 bg-surface-50 text-go-700"
                       : "border-ink-100 bg-ink-50 text-ink-400 group-hover:border-go-100 group-hover:bg-go-50 group-hover:text-go-600"
                   )}
                 >
@@ -85,7 +85,7 @@ export function Sidebar() {
                 <ChevronRight
                   className={cn(
                     "h-4 w-4 transition-transform",
-                    active ? "text-go-500" : "text-ink-300 group-hover:translate-x-0.5 group-hover:text-go-500"
+                    active ? "text-ink-300" : "text-ink-300 group-hover:translate-x-0.5 group-hover:text-go-500"
                   )}
                 />
               </Link>
@@ -94,7 +94,7 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="border-t border-ink-100 bg-surface-muted px-6 py-4">
+      <div className="border-t border-ink-200 bg-surface-muted px-5 py-4">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-400">
           Delivery
         </div>

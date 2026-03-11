@@ -21,7 +21,20 @@ class ClaudeProvider:
             payload,
             (
                 "Return strict JSON with keys: summary, rationale_sentences, key_strengths, "
-                "key_risks, cited_metrics. rationale_sentences must contain exactly 3 to 5 concise sentences."
+                "key_risks, cited_metrics. rationale_sentences must contain exactly 3 to 5 concise sentences. "
+                "If payload.sanity_check is present, use its notes and suggested_explanation_focus to improve emphasis and completeness without adding facts."
+            ),
+        )
+
+    def generate_sanity_check(self, payload: dict) -> dict:
+        return self._generate(
+            payload,
+            (
+                "Return strict JSON with keys: status, issue_codes, notes, "
+                "suggested_explanation_focus, suggested_message_focus. "
+                "status must be either 'passed' or 'warning'. "
+                "This is a lightweight QA sanity check, not a second underwriting decision. "
+                "Do not recommend new offers, new prices, or policy overrides."
             ),
         )
 
@@ -32,7 +45,8 @@ class ClaudeProvider:
                 "Return strict JSON with keys: message_body, cta_text, tone_label. "
                 "Write concise merchant-facing WhatsApp copy. "
                 "Do not mention internal labels such as risk tier, underwriting tier, score, or policy engine. "
-                "Use only the formatted monetary values and rate strings present in the payload."
+                "Use only the formatted monetary values and rate strings present in the payload. "
+                "If payload.sanity_check is present, use its notes and suggested_message_focus only to improve clarity or emphasis."
             ),
         )
 
